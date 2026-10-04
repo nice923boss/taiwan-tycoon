@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- overlapping brown scales -->
+    <pattern id="scales" width="40" height="36" patternUnits="userSpaceOnUse">
+      <rect width="40" height="36" fill="#a86d3b"/>
+      <path d="M8 3 Q20 14 32 3 M-12 21 Q0 32 12 21 M28 21 Q40 32 52 21" fill="none" stroke="#c98d55" stroke-width="3"/>
+      <path d="M0 0 Q20 28 40 0 M-20 18 Q0 46 20 18 M20 18 Q40 46 60 18" fill="none" stroke="#6b4221" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <g stroke="#3d2412" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- long scaly tail curling up at the tip -->
+    <path d="M316 368 C376 370 428 382 446 350 C452 336 446 324 436 318 C470 326 484 396 432 432 C392 458 334 462 300 452Z" fill="url(#scales)"/>
+    <!-- feet, body, belly -->
+    <ellipse cx="214" cy="466" rx="30" ry="18" fill="#8a5530"/>
+    <ellipse cx="288" cy="466" rx="30" ry="18" fill="#8a5530"/>
+    <ellipse cx="250" cy="368" rx="98" ry="104" fill="url(#scales)"/>
+    <ellipse cx="250" cy="386" rx="56" ry="72" fill="#efcfae"/>
+    <!-- front legs with claws -->
+    <ellipse cx="172" cy="366" rx="24" ry="40" fill="url(#scales)" transform="rotate(20 172 366)"/>
+    <ellipse cx="328" cy="366" rx="24" ry="40" fill="url(#scales)" transform="rotate(-20 328 366)"/>
+    <path d="M148 402 l-4 14 M157 406 l-1 15 M166 404 l2 14 M334 404 l-2 14 M343 406 l1 15 M352 402 l4 14" fill="none" stroke-width="5"/>
+    <!-- small head with scale cap -->
+    <ellipse cx="250" cy="198" rx="94" ry="84" fill="#efcfae"/>
+    <path d="M158 202 C150 120 210 106 250 106 C290 106 350 120 342 202 C320 174 290 162 250 164 C210 162 180 174 158 202Z" fill="url(#scales)"/>
+    <!-- snout -->
+    <path d="M220 232 Q250 222 280 232 Q278 266 250 286 Q222 266 220 232Z" fill="#f6dcc0" stroke-width="4"/>
+    <g stroke="none">
+      <ellipse cx="250" cy="268" rx="10" ry="7" fill="#3d2412"/>
+      <ellipse cx="212" cy="214" rx="12" ry="15" fill="#2a1a10"/>
+      <ellipse cx="288" cy="214" rx="12" ry="15" fill="#2a1a10"/>
+      <circle cx="216" cy="208" r="5" fill="#fff"/><circle cx="292" cy="208" r="5" fill="#fff"/>
+      <circle cx="209" cy="221" r="2.5" fill="#fff"/><circle cx="285" cy="221" r="2.5" fill="#fff"/>
+      <ellipse cx="188" cy="244" rx="16" ry="9" fill="#ff8da1" opacity=".5"/>
+      <ellipse cx="312" cy="244" rx="16" ry="9" fill="#ff8da1" opacity=".5"/>
+    </g>
+    <path d="M244 279 Q250 283 256 279" fill="none" stroke-width="3"/>
+  </g>
+</svg>

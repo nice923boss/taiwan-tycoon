@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="768" viewBox="0 0 512 768">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5a35a8"/>
+      <stop offset="1" stop-color="#211659"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#b9a2ff" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#b9a2ff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="12" r="1.6" fill="#fff" opacity=".35"/>
+      <circle cx="30" cy="30" r="1.1" fill="#fff" opacity=".25"/>
+    </pattern>
+    <path id="star" d="M0 -20 L4.49 -6.18 L19.02 -6.18 L7.27 2.36 L11.76 16.18 L0 7.64 L-11.76 16.18 L-7.27 2.36 L-19.02 -6.18 L-4.49 -6.18Z"/>
+    <path id="sparkle" d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16Z"/>
+    <clipPath id="card"><rect width="512" height="768" rx="32"/></clipPath>
+  </defs>
+  <g clip-path="url(#card)">
+    <rect width="512" height="768" fill="url(#bg)"/>
+    <rect width="512" height="768" fill="url(#dots)"/>
+    <circle cx="256" cy="384" r="300" fill="url(#glow)"/>
+    <g fill="none" stroke="#fff" opacity=".08" stroke-width="3">
+      <circle cx="256" cy="384" r="190"/><circle cx="256" cy="384" r="240"/><circle cx="256" cy="384" r="290"/>
+    </g>
+  </g>
+  <!-- double frame -->
+  <rect x="24" y="24" width="464" height="720" rx="20" fill="none" stroke="#f3d27a" stroke-width="6"/>
+  <rect x="38" y="38" width="436" height="692" rx="12" fill="none" stroke="#f3d27a" stroke-width="2" opacity=".7"/>
+  <!-- sparkles in the field -->
+  <g fill="#f3d27a">
+    <use href="#sparkle" transform="translate(70 70)"/>
+    <use href="#sparkle" transform="translate(442 70)"/>
+    <use href="#sparkle" transform="translate(70 698)"/>
+    <use href="#sparkle" transform="translate(442 698)"/>
+    <use href="#sparkle" transform="translate(128 170) scale(.7)" opacity=".8"/>
+    <use href="#sparkle" transform="translate(392 150) scale(.9)" opacity=".8"/>
+    <use href="#sparkle" transform="translate(116 610) scale(.8)" opacity=".8"/>
+    <use href="#sparkle" transform="translate(396 616) scale(.6)" opacity=".8"/>
+    <use href="#star" transform="translate(256 152) scale(.6)"/>
+    <use href="#star" transform="translate(256 616) scale(.6)"/>
+  </g>
+  <!-- medallion with swirl and stars -->
+  <circle cx="256" cy="384" r="150" fill="#2b1d6e" stroke="#f3d27a" stroke-width="8"/>
+  <circle cx="256" cy="384" r="132" fill="none" stroke="#8f78e0" stroke-width="4" stroke-dasharray="10 12"/>
+  <path d="M256 379 a10 10 0 0 1 20 0 a20 20 0 0 1 -40 0 a30 30 0 0 1 60 0 a40 40 0 0 1 -80 0 a50 50 0 0 1 100 0 a60 60 0 0 1 -120 0 a70 70 0 0 1 140 0 a80 80 0 0 1 -160 0" fill="none" stroke="#f3d27a" stroke-width="26" stroke-linecap="round" opacity=".22"/>
+  <path d="M256 379 a10 10 0 0 1 20 0 a20 20 0 0 1 -40 0 a30 30 0 0 1 60 0 a40 40 0 0 1 -80 0 a50 50 0 0 1 100 0 a60 60 0 0 1 -120 0 a70 70 0 0 1 140 0 a80 80 0 0 1 -160 0" fill="none" stroke="#f3d27a" stroke-width="11" stroke-linecap="round"/>
+  <g fill="#ffe7a3">
+    <use href="#star" transform="translate(352 300) scale(.9)"/>
+    <use href="#star" transform="translate(166 470) scale(.7)"/>
+    <use href="#star" transform="translate(354 468) scale(.5)"/>
+    <use href="#star" transform="translate(162 300) scale(.45)"/>
+  </g>
+</svg>

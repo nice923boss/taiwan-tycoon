@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8dce5"/>
+      <stop offset=".62" stop-color="#ebe7dd"/>
+      <stop offset="1" stop-color="#f3e4d1"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff6e4" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#fff6e4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9d1d7"/>
+      <stop offset="1" stop-color="#9fbfc9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="430" cy="300" r="280" fill="url(#sun)"/>
+  <circle cx="430" cy="300" r="72" fill="#fcf0dc"/>
+  <g fill="#fff" opacity=".55">
+    <ellipse cx="780" cy="210" rx="170" ry="30"/><ellipse cx="840" cy="188" rx="90" ry="38"/>
+    <ellipse cx="1500" cy="150" rx="210" ry="28"/><ellipse cx="1440" cy="132" rx="96" ry="34"/>
+    <ellipse cx="200" cy="470" rx="160" ry="20"/><ellipse cx="1150" cy="340" rx="130" ry="18"/>
+  </g>
+  <path d="M960 270 q10 -8 20 0 q10 -8 20 0 M1030 240 q8 -6 16 0 q8 -6 16 0 M1000 300 q7 -5 14 0 q7 -5 14 0" fill="none" stroke="#8ea3ab" stroke-width="3" stroke-linecap="round"/>
+  <path d="M0 610 C23.3 601.7 96.7 563.3 140 560 C183.3 556.7 216.7 600 260 590 C303.3 580 356.7 507.5 400 500 C443.3 492.5 476.7 550 520 545 C563.3 540 616.7 474.2 660 470 C703.3 465.8 740 522.5 780 520 C820 517.5 856.7 453.3 900 455 C943.3 456.7 993.3 525.8 1040 530 C1086.7 534.2 1133.3 478.3 1180 480 C1226.7 481.7 1273.3 536.7 1320 540 C1366.7 543.3 1413.3 497.5 1460 500 C1506.7 502.5 1550 554.2 1600 555 C1650 555.8 1706.7 504.2 1760 505 C1813.3 505.8 1893.3 550.8 1920 560 V1080 H0Z" fill="#c3d4d7"/>
+  <path d="M0 700 C20 693.3 80 661.7 120 660 C160 658.3 196.7 698.3 240 690 C283.3 681.7 336.7 618.3 380 610 C423.3 601.7 460 648.3 500 640 C540 631.7 583.3 580.8 620 560 C656.7 539.2 686.7 511.7 720 515 C753.3 518.3 783.3 562.5 820 580 C856.7 597.5 900 616.7 940 620 C980 623.3 1020 595 1060 600 C1100 605 1140 645 1180 650 C1220 655 1260 625 1300 630 C1340 635 1376.7 675 1420 680 C1463.3 685 1513.3 656.7 1560 660 C1606.7 663.3 1656.7 696.7 1700 700 C1743.3 703.3 1783.3 680 1820 680 C1856.7 680 1903.3 696.7 1920 700 V1080 H0Z" fill="#abc4c4"/>
+  <g fill="#9db4bb">
+    <rect x="1250" y="760" width="30" height="40"/><rect x="1295" y="745" width="22" height="55"/><rect x="1325" y="765" width="40" height="35"/><rect x="1372" y="730" width="28" height="70"/><rect x="1405" y="752" width="34" height="48"/><rect x="1545" y="738" width="30" height="62"/><rect x="1582" y="756" width="40" height="44"/><rect x="1630" y="726" width="26" height="74"/><rect x="1662" y="750" width="38" height="50"/><rect x="1708" y="764" width="30" height="36"/><rect x="1745" y="772" width="24" height="28"/>
+  </g>
+  <g fill="#8ba3ad">
+    <polygon points="1428,800 1532,800 1514,724 1446,724"/><polygon points="1450,724 1510,724 1520,678 1440,678"/><polygon points="1450,678 1510,678 1520,632 1440,632"/><polygon points="1450,632 1510,632 1520,586 1440,586"/><polygon points="1450,586 1510,586 1520,540 1440,540"/><polygon points="1450,540 1510,540 1520,494 1440,494"/><polygon points="1450,494 1510,494 1520,448 1440,448"/><polygon points="1450,448 1510,448 1520,402 1440,402"/><polygon points="1450,402 1510,402 1520,356 1440,356"/><polygon points="1456,356 1504,356 1500,328 1460,328"/><polygon points="1466,328 1494,328 1490,306 1470,306"/><polygon points="1476,306 1484,306 1481,226 1479,226"/>
+  </g>
+  <path d="M0 750 C25 745.3 100 721.7 150 722 C200 722.3 248.3 749 300 752 C351.7 755 406.7 735.3 460 740 C513.3 744.7 563.3 770.7 620 780 C676.7 789.3 736.7 792.7 800 796 C863.3 799.3 933.3 800 1000 800 C1066.7 800 1133.3 797.3 1200 796 C1266.7 794.7 1333.3 792.3 1400 792 C1466.7 791.7 1533.3 794.7 1600 794 C1666.7 793.3 1746.7 788.3 1800 788 C1853.3 787.7 1900 791.3 1920 792 V1080 H0Z" fill="#97b5ae"/>
+  <rect y="818" width="1920" height="262" fill="url(#sea)"/>
+  <path d="M0 818 H1920" stroke="#d9e6e6" stroke-width="4"/>
+  <path d="M120 860 q20 -10 40 0 t40 0 M610 860 q20 -10 40 0 t40 0 M980 860 q20 -10 40 0 t40 0 M1380 860 q20 -10 40 0 t40 0 M1700 860 q20 -10 40 0 t40 0 M300 900 q20 -10 40 0 t40 0 M820 900 q20 -10 40 0 t40 0 M1180 900 q20 -10 40 0 t40 0 M1560 900 q20 -10 40 0 t40 0 M80 950 q20 -10 40 0 t40 0 M520 950 q20 -10 40 0 t40 0 M1000 950 q20 -10 40 0 t40 0 M1420 950 q20 -10 40 0 t40 0 M1800 950 q20 -10 40 0 t40 0 M260 1010 q20 -10 40 0 t40 0 M760 1010 q20 -10 40 0 t40 0 M1240 1010 q20 -10 40 0 t40 0 M1640 1010 q20 -10 40 0 t40 0" fill="none" stroke="#d6e5e8" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <path d="M400 850 h60 M380 880 h100 M410 915 h50 M370 950 h120 M420 990 h40" fill="none" stroke="#fbf0dc" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  <path d="M0 960 Q300 930 560 1080 H0Z" fill="#eadfca"/>
+  <path d="M1920 1000 Q1700 990 1560 1080 H1920Z" fill="#e6dbc6"/>
+</svg>

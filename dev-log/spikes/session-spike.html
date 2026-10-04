@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Session Spike</title>
+<script type="importmap">
+{
+  "imports": {
+    "zod": "https://cdn.jsdelivr.net/npm/zod@4.6.5/+esm",
+    "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/+esm"
+  }
+}
+</script>
+</head>
+<body>
+<pre id="out"></pre>
+<script type="module">
+// Spike harness for js/net/session.js over the real PeerJS transport.
+// Open several tabs with the same ?room=, then drive them through window.T.
+const out = document.getElementById('out');
+const t0 = performance.now();
+const ms = () => Math.round(performance.now() - t0);
+const T = { events: [], errors: [], session: null, loadError: null };
+window.T = T;
+const log = (...a) => {
+  T.events.push([ms(), ...a]);
+  out.textContent += `${ms()} ${a.join(' ')}\n`;
+};
+
+try {
+  const [{ createSession }, { peerTransport }, { loadSecret, roomIdFor }, peerMod, zodMod] = await Promise.all([
+    import('../../js/net/session.js'),
+    import('../../js/net/transport-peer.js'),
+    import('../../js/net/identity.js'),
+    import('peerjs'),
+    import('zod'),
+  ]);
+  T.exports = { Peer: typeof peerMod.Peer, z: typeof zodMod.z };
+  T.roomId = roomIdFor(location);
+  const s = createSession({ transport: peerTransport, roomId: T.roomId, secret: loadSecret(), name: `Tab${Math.floor(Math.random() * 1000)}` });
+  T.session = s;
+  let last = '';
+  s.onUpdate((st) => {
+    const key = `${st.status}|${st.isHost}|${st.room?.epoch}|${st.room?.rev}`;
+    if (key !== last) log('state', key);
+    last = key;
+  });
+  s.onError((k) => {
+    T.errors.push(k);
+    log('err', k);
+  });
+  addEventListener('pagehide', () => s.stop());
+  log('room', T.roomId);
+} catch (err) {
+  T.loadError = String(err);
+  log('LOAD ERROR', String(err));
+}
+</script>
+</body>
+</html>

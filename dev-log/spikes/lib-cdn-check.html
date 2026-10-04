@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>S1 CDN 載入檢查</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+    "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+    "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js",
+    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.15.0/+esm",
+    "gsap/SplitText.js": "https://cdn.jsdelivr.net/npm/gsap@3.15.0/SplitText.js/+esm",
+    "lightweight-charts": "https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.mjs",
+    "zzfx": "https://cdn.jsdelivr.net/npm/zzfx@1.4.0/ZzFX.js",
+    "tone": "https://cdn.jsdelivr.net/npm/tone@15.1.22/+esm",
+    "canvas-confetti": "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.module.mjs",
+    "fireworks-js": "https://cdn.jsdelivr.net/npm/fireworks-js@2.10.8/+esm",
+    "qr-code-styling": "https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/+esm",
+    "driver.js": "https://cdn.jsdelivr.net/npm/driver.js@1.9.0/+esm",
+    "html-to-image": "https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm",
+    "atropos": "https://cdn.jsdelivr.net/npm/atropos@2.0.2/atropos.mjs",
+    "@floating-ui/dom": "https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.8.0/+esm",
+    "lucide/": "https://cdn.jsdelivr.net/npm/lucide@1.51.0/dist/esm/",
+    "zod": "https://cdn.jsdelivr.net/npm/zod@4.6.5/+esm",
+    "zod/mini": "https://cdn.jsdelivr.net/npm/zod@4.6.5/mini/+esm",
+    "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/+esm"
+  }
+}
+</script>
+<style>body{font:14px system-ui;margin:16px}td,th{border:1px solid #ccc;padding:4px 8px}table{border-collapse:collapse}</style>
+</head>
+<body>
+<h1>S1 CDN 載入檢查</h1>
+<table id="out"><tr><th>函式庫</th><th>結果</th><th>毫秒</th><th>匯出</th></tr></table>
+<pre id="sum"></pre>
+<script type="module">
+const LIBS = [
+  ['three', () => import('three'), (m) => m.REVISION],
+  ['three/addons RoundedBox', () => import('three/addons/geometries/RoundedBoxGeometry.js'), (m) => typeof m.RoundedBoxGeometry],
+  ['three/addons OrbitControls', () => import('three/addons/controls/OrbitControls.js'), (m) => typeof m.OrbitControls],
+  ['cannon-es', () => import('cannon-es'), (m) => typeof m.World],
+  ['gsap', () => import('gsap'), (m) => m.gsap?.version],
+  ['gsap SplitText', () => import('gsap/SplitText.js'), (m) => typeof m.SplitText],
+  ['lightweight-charts', () => import('lightweight-charts'), (m) => m.version?.()],
+  ['zzfx', () => import('zzfx'), (m) => typeof m.zzfx],
+  ['tone', () => import('tone'), (m) => m.version],
+  ['canvas-confetti', () => import('canvas-confetti'), (m) => typeof m.default?.shapeFromText],
+  ['fireworks-js', () => import('fireworks-js'), (m) => typeof m.Fireworks],
+  ['qr-code-styling', () => import('qr-code-styling'), (m) => typeof m.default],
+  ['driver.js', () => import('driver.js'), (m) => typeof m.driver],
+  ['html-to-image', () => import('html-to-image'), (m) => typeof m.toPng],
+  ['atropos', () => import('atropos'), (m) => typeof m.default],
+  ['@floating-ui/dom', () => import('@floating-ui/dom'), (m) => typeof m.computePosition],
+  ['lucide icon', () => Promise.all([import('lucide/createElement.mjs'), import('lucide/icons/dice-5.mjs')]), ([c, i]) => c.default(i.default).outerHTML.length],
+  ['zod', () => import('zod'), (m) => typeof m.z?.object],
+  ['zod/mini', () => import('zod/mini'), (m) => typeof m.z?.object],
+  ['peerjs', () => import('peerjs'), (m) => typeof (m.Peer ?? m.default)],
+];
+const out = document.getElementById('out');
+const results = [];
+for (const [name, load, probe] of LIBS) {
+  const t0 = performance.now();
+  let ok = false; let info = '';
+  try { const m = await load(); info = String(probe(m)); ok = true; } catch (e) { info = e.message; }
+  const ms = Math.round(performance.now() - t0);
+  results.push({ name, ok, ms, info });
+  out.insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td>${ok ? 'OK' : 'FAIL'}</td><td>${ms}</td><td>${info}</td></tr>`);
+}
+const res = performance.getEntriesByType('resource').filter((r) => r.name.includes('cdn.jsdelivr.net'));
+const byLib = {};
+for (const r of res) {
+  const m = r.name.match(/npm\/(@?[^@/]+(?:\/[^@/]+)?)@/);
+  const key = m ? m[1] : r.name;
+  byLib[key] = (byLib[key] ?? 0) + r.transferSize;
+}
+window.S1 = { results, byLib, files: res.map((r) => ({ url: r.name, transfer: r.transferSize, decoded: r.decodedBodySize })) };
+document.getElementById('sum').textContent = JSON.stringify(byLib, null, 1);
+</script>
+</body>
+</html>

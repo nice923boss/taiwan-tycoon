@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g stroke="#16141b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- ears -->
+    <circle cx="150" cy="110" r="44" fill="#2f2c36"/>
+    <circle cx="362" cy="110" r="44" fill="#2f2c36"/>
+    <circle cx="150" cy="112" r="22" fill="#57505f" stroke="none"/>
+    <circle cx="362" cy="112" r="22" fill="#57505f" stroke="none"/>
+    <!-- body, arms, feet -->
+    <ellipse cx="256" cy="384" rx="94" ry="86" fill="#2f2c36"/>
+    <ellipse cx="172" cy="374" rx="27" ry="44" fill="#2f2c36" transform="rotate(25 172 374)"/>
+    <ellipse cx="340" cy="374" rx="27" ry="44" fill="#2f2c36" transform="rotate(-25 340 374)"/>
+    <ellipse cx="212" cy="464" rx="38" ry="20" fill="#2f2c36"/>
+    <ellipse cx="300" cy="464" rx="38" ry="20" fill="#2f2c36"/>
+    <!-- white V-shaped chest mark -->
+    <path d="M188 334 Q232 360 256 392 Q280 360 324 334 Q290 346 256 366 Q222 346 188 334Z" fill="#f3efe4" stroke-width="4"/>
+    <!-- head -->
+    <ellipse cx="256" cy="208" rx="140" ry="120" fill="#2f2c36"/>
+    <path d="M150 150 Q190 106 250 98" fill="none" stroke="#4a4652" stroke-width="10"/>
+    <ellipse cx="256" cy="252" rx="56" ry="40" fill="#d9b58e" stroke-width="4"/>
+    <!-- eyes -->
+    <ellipse cx="196" cy="198" rx="21" ry="25" fill="#fff" stroke-width="4"/>
+    <ellipse cx="316" cy="198" rx="21" ry="25" fill="#fff" stroke-width="4"/>
+    <g stroke="none">
+      <ellipse cx="198" cy="202" rx="14" ry="18" fill="#3a2414"/>
+      <ellipse cx="314" cy="202" rx="14" ry="18" fill="#3a2414"/>
+      <circle cx="203" cy="194" r="6" fill="#fff"/>
+      <circle cx="319" cy="194" r="6" fill="#fff"/>
+      <circle cx="193" cy="210" r="3" fill="#fff"/>
+      <circle cx="309" cy="210" r="3" fill="#fff"/>
+      <ellipse cx="166" cy="248" rx="18" ry="10" fill="#ff8da1" opacity=".55"/>
+      <ellipse cx="346" cy="248" rx="18" ry="10" fill="#ff8da1" opacity=".55"/>
+    </g>
+    <!-- nose and mouth -->
+    <path d="M238 232 Q256 222 274 232 Q270 248 256 250 Q242 248 238 232Z" fill="#16141b" stroke-width="3"/>
+    <path d="M256 250 V260 M238 260 Q247 272 256 260 Q265 272 274 260" fill="none" stroke-width="5"/>
+  </g>
+</svg>

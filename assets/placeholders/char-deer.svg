@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g stroke="#4a2613" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- small antlers -->
+    <path d="M206 120 L190 62 M197 88 L172 76 M306 120 L322 62 M315 88 L340 76" fill="none" stroke-width="17"/>
+    <path d="M206 120 L190 62 M197 88 L172 76 M306 120 L322 62 M315 88 L340 76" fill="none" stroke="#e0c48c" stroke-width="9"/>
+    <!-- leaf-shaped ears -->
+    <path d="M150 168 C112 138 72 146 62 166 C84 190 124 196 156 190Z" fill="#c4682f"/>
+    <path d="M362 168 C400 138 440 146 450 166 C428 190 388 196 356 190Z" fill="#c4682f"/>
+    <path d="M144 172 C116 156 92 158 80 168 C100 182 124 186 146 184Z M368 172 C396 156 420 158 432 168 C412 182 388 186 366 184Z" fill="#f2a9a0" stroke="none"/>
+    <!-- legs with dark hooves -->
+    <rect x="208" y="430" width="34" height="44" rx="15" fill="#c4682f"/>
+    <rect x="270" y="430" width="34" height="44" rx="15" fill="#c4682f"/>
+    <path d="M208 462 h34 v10 a12 12 0 0 1 -12 12 h-10 a12 12 0 0 1 -12 -12Z M270 462 h34 v10 a12 12 0 0 1 -12 12 h-10 a12 12 0 0 1 -12 -12Z" fill="#3a2a20"/>
+    <!-- body with white spots -->
+    <ellipse cx="256" cy="380" rx="80" ry="78" fill="#c4682f"/>
+    <ellipse cx="256" cy="396" rx="44" ry="50" fill="#f7e4c8" stroke="none"/>
+    <g fill="#fff6e8" stroke="none">
+      <circle cx="198" cy="350" r="7"/><circle cx="188" cy="382" r="7"/><circle cx="202" cy="412" r="6"/>
+      <circle cx="314" cy="350" r="7"/><circle cx="324" cy="382" r="7"/><circle cx="310" cy="412" r="6"/>
+      <circle cx="222" cy="330" r="5"/><circle cx="290" cy="330" r="5"/>
+    </g>
+    <!-- front legs -->
+    <ellipse cx="184" cy="378" rx="18" ry="36" fill="#c4682f" transform="rotate(16 184 378)"/>
+    <ellipse cx="328" cy="378" rx="18" ry="36" fill="#c4682f" transform="rotate(-16 328 378)"/>
+    <ellipse cx="174" cy="410" rx="12" ry="9" fill="#3a2a20"/>
+    <ellipse cx="338" cy="410" rx="12" ry="9" fill="#3a2a20"/>
+    <!-- head -->
+    <ellipse cx="256" cy="206" rx="124" ry="108" fill="#c4682f"/>
+    <ellipse cx="256" cy="262" rx="48" ry="34" fill="#f7e4c8" stroke-width="4"/>
+    <!-- eyes with lashes -->
+    <path d="M184 194 L174 186 M184 206 L173 204 M328 194 L338 186 M328 206 L339 204" fill="none" stroke-width="4"/>
+    <g stroke="none">
+      <ellipse cx="202" cy="206" rx="17" ry="22" fill="#2d1c14"/>
+      <ellipse cx="310" cy="206" rx="17" ry="22" fill="#2d1c14"/>
+      <circle cx="207" cy="198" r="6" fill="#fff"/><circle cx="315" cy="198" r="6" fill="#fff"/>
+      <circle cx="198" cy="214" r="3" fill="#fff"/><circle cx="306" cy="214" r="3" fill="#fff"/>
+      <ellipse cx="256" cy="246" rx="17" ry="12" fill="#2d1c14"/>
+      <ellipse cx="251" cy="242" rx="5" ry="3" fill="#fff" opacity=".6"/>
+      <ellipse cx="176" cy="250" rx="17" ry="9" fill="#ff8da1" opacity=".5"/>
+      <ellipse cx="336" cy="250" rx="17" ry="9" fill="#ff8da1" opacity=".5"/>
+    </g>
+    <path d="M256 258 V266 M242 268 Q249 276 256 266 Q263 276 270 268" fill="none" stroke-width="4"/>
+  </g>
+</svg>

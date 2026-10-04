@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>PeerJS Spike</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+// Spike harness: driven from devtools / automation via window.S
+const out = document.getElementById('out');
+const log = (...a) => { out.textContent += a.join(' ') + '\n'; };
+window.S = {
+  peer: null, conns: [], inbox: [], events: [],
+  claim(id) {
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const p = id ? new Peer(id, { debug: 1 }) : new Peer({ debug: 1 });
+      this.peer = p;
+      p.on('open', (pid) => { log('open', pid); resolve({ ok: true, id: pid, ms: Math.round(performance.now() - t0) }); });
+      p.on('error', (e) => { log('error', e.type); this.events.push('error:' + e.type); resolve({ ok: false, type: e.type, ms: Math.round(performance.now() - t0) }); });
+      p.on('connection', (c) => {
+        this.conns.push(c);
+        c.on('data', (d) => { this.inbox.push(d); if (d && d.echo) c.send({ echoed: d.payload.length, payload: d.payload }); });
+        c.on('close', () => this.events.push('conn-close'));
+      });
+      p.on('disconnected', () => this.events.push('disconnected'));
+    });
+  },
+  connect(id) {
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const c = this.peer.connect(id, { reliable: true, serialization: 'json' });
+      this.conns.push(c);
+      c.on('open', () => resolve({ ok: true, ms: Math.round(performance.now() - t0) }));
+      c.on('data', (d) => this.inbox.push(d));
+      c.on('close', () => this.events.push('conn-close'));
+      c.on('error', (e) => resolve({ ok: false, err: String(e) }));
+      setTimeout(() => resolve({ ok: false, err: 'timeout' }), 15000);
+    });
+  },
+  bigEcho(size) {
+    const payload = 'x'.repeat(size);
+    const n0 = this.inbox.length;
+    this.conns[0].send({ echo: true, payload });
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const iv = setInterval(() => {
+        if (this.inbox.length > n0) { clearInterval(iv); const d = this.inbox[this.inbox.length - 1]; resolve({ ok: d.payload.length === size, ms: Math.round(performance.now() - t0) }); }
+        if (performance.now() - t0 > 10000) { clearInterval(iv); resolve({ ok: false, err: 'timeout' }); }
+      }, 20);
+    });
+  },
+  defaultConfig() { return JSON.stringify(window.peerjs && window.peerjs.util && window.peerjs.util.defaultConfig); },
+};
+log('ready', typeof Peer);
+</script>
+</body>
+</html>

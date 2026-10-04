@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g stroke="#0e1a35" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- very long blue tail feathers with black band and white tips -->
+    <path d="M296 420 C380 430 436 360 446 222" fill="none" stroke-width="36"/>
+    <path d="M296 420 C380 430 436 360 446 222" fill="none" stroke="#2a66cc" stroke-width="24"/>
+    <path d="M300 440 C370 460 430 430 466 346" fill="none" stroke-width="32"/>
+    <path d="M300 440 C370 460 430 430 466 346" fill="none" stroke="#2a66cc" stroke-width="20"/>
+    <path d="M432 236 L460 238 M452 344 L476 354" fill="none" stroke="#16161d" stroke-width="12" stroke-linecap="butt"/>
+    <ellipse cx="446" cy="210" rx="13" ry="22" fill="#fff"/>
+    <ellipse cx="470" cy="330" rx="11" ry="19" fill="#fff" transform="rotate(23 470 330)"/>
+    <!-- red legs and feet -->
+    <path d="M226 448 V474 M212 482 L226 472 L240 482 M280 448 V474 M266 482 L280 472 L294 482" fill="none" stroke-width="15"/>
+    <path d="M226 448 V474 M212 482 L226 472 L240 482 M280 448 V474 M266 482 L280 472 L294 482" fill="none" stroke="#d8262f" stroke-width="8"/>
+    <!-- body with black upper breast -->
+    <ellipse cx="252" cy="372" rx="88" ry="92" fill="#2a66cc"/>
+    <ellipse cx="252" cy="400" rx="52" ry="56" fill="#5b8fe0" stroke="none"/>
+    <ellipse cx="252" cy="312" rx="78" ry="40" fill="#16161d" stroke="none"/>
+    <!-- wings with white-tipped primaries -->
+    <ellipse cx="172" cy="384" rx="32" ry="62" fill="#1d4fa8" transform="rotate(14 172 384)"/>
+    <ellipse cx="332" cy="384" rx="32" ry="62" fill="#1d4fa8" transform="rotate(-14 332 384)"/>
+    <g fill="#fff" stroke="none">
+      <circle cx="150" cy="430" r="6"/><circle cx="162" cy="438" r="6"/>
+      <circle cx="354" cy="430" r="6"/><circle cx="342" cy="438" r="6"/>
+    </g>
+    <!-- black head -->
+    <ellipse cx="256" cy="200" rx="128" ry="114" fill="#16161d"/>
+    <path d="M160 140 Q196 100 252 96" fill="none" stroke="#3b4466" stroke-width="10"/>
+    <!-- yellow eyes -->
+    <g stroke="none">
+      <ellipse cx="204" cy="198" rx="21" ry="24" fill="#f4cd3c"/>
+      <ellipse cx="308" cy="198" rx="21" ry="24" fill="#f4cd3c"/>
+      <ellipse cx="206" cy="201" rx="11" ry="15" fill="#111"/>
+      <ellipse cx="306" cy="201" rx="11" ry="15" fill="#111"/>
+      <circle cx="211" cy="191" r="6" fill="#fff"/><circle cx="311" cy="191" r="6" fill="#fff"/>
+      <circle cx="200" cy="210" r="3" fill="#fff"/><circle cx="300" cy="210" r="3" fill="#fff"/>
+      <ellipse cx="172" cy="246" rx="17" ry="9" fill="#ff6b8a" opacity=".5"/>
+      <ellipse cx="340" cy="246" rx="17" ry="9" fill="#ff6b8a" opacity=".5"/>
+    </g>
+    <!-- red beak -->
+    <path d="M226 236 Q256 222 286 236 Q272 262 256 290 Q240 262 226 236Z" fill="#d8262f" stroke="#5a0e14" stroke-width="4"/>
+    <path d="M234 246 Q256 256 278 246" fill="none" stroke="#5a0e14" stroke-width="3"/>
+  </g>
+</svg>

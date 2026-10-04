@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S4 K 線回合軸</title>
+<script type="importmap">
+{ "imports": { "lightweight-charts": "https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.mjs" } }
+</script>
+<style>
+  body { margin: 0; background: #14211d; color: #f6efdd; font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  #bar { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px; }
+  #k { width: min(960px, calc(100vw - 32px)); height: 380px; margin: 0 16px; }
+  #out { margin: 8px 16px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <button id="next">收盤一回合</button>
+  <select id="sym"></select>
+</div>
+<div id="k"></div>
+<pre id="out"></pre>
+<script type="module">
+import { createChart, CandlestickSeries } from 'lightweight-charts';
+import { STOCKS, createMarket, closeMarket } from '../../js/engine/stocks.js';
+
+const out = document.getElementById('out');
+const say = (s) => { out.textContent = s; };
+
+// Real engine data: seeded market, 39 closed rounds (history r0..r39 = 40 candles).
+const holder = { rng: 20261004, market: createMarket() };
+let round = 0;
+const closeRound = () => { round += 1; closeMarket(holder, round); };
+for (let k = 0; k < 39; k += 1) closeRound();
+
+const tickLabels = new Set();
+const roundLabel = (time) => {
+  const label = `R${time}`;
+  tickLabels.add(label);
+  return label;
+};
+
+const chart = createChart(document.getElementById('k'), {
+  autoSize: true,
+  layout: { background: { color: '#1b2b26' }, textColor: '#f6efdd', fontFamily: '"Noto Sans TC", "Microsoft JhengHei", sans-serif', attributionLogo: true },
+  grid: { vertLines: { color: 'rgba(246,239,221,0.06)' }, horzLines: { color: 'rgba(246,239,221,0.06)' } },
+  timeScale: { tickMarkFormatter: roundLabel, fixLeftEdge: true, fixRightEdge: true, barSpacing: 18 },
+  localization: { timeFormatter: roundLabel, priceFormatter: (p) => p.toFixed(2) },
+  handleScroll: false,
+  handleScale: false,
+});
+// Taiwan convention: red = up, green = down.
+const series = chart.addSeries(CandlestickSeries, {
+  upColor: '#e8453c', borderUpColor: '#e8453c', wickUpColor: '#e8453c',
+  downColor: '#2fa36b', borderDownColor: '#2fa36b', wickDownColor: '#2fa36b',
+  priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+});
+
+let sym = STOCKS[0].sym;
+const toBars = (history) => history.map(({ r, o, h, l, c }) => ({ time: r, open: o, high: h, low: l, close: c }));
+function draw() {
+  const t0 = performance.now();
+  series.setData(toBars(holder.market.stocks[sym].history));
+  chart.timeScale().fitContent();
+  return +(performance.now() - t0).toFixed(2);
+}
+
+const symSel = document.getElementById('sym');
+symSel.innerHTML = STOCKS.map((s) => `<option>${s.sym}</option>`).join('');
+symSel.onchange = () => { sym = symSel.value; say(JSON.stringify(S4.state())); };
+
+window.S4 = {
+  next: () => { closeRound(); const ms = draw(); return { round, setDataMs: ms, ...S4.state() }; },
+  setSym: (s) => { sym = s; symSel.value = s; return { setDataMs: draw(), ...S4.state() }; },
+  state: () => {
+    const data = series.data();
+    const ups = data.filter((b) => b.close > b.open).length;
+    return {
+      sym, candles: data.length, first: data[0]?.time, last: data.at(-1)?.time,
+      ups, downs: data.filter((b) => b.close < b.open).length, flat: data.length - ups - data.filter((b) => b.close < b.open).length,
+      tickLabels: [...tickLabels].sort((a, b) => a.slice(1) - b.slice(1)),
+      attribution: [...document.querySelectorAll('#k a')].map((a) => a.href),
+    };
+  },
+};
+document.getElementById('next').onclick = () => say(JSON.stringify(S4.next()));
+
+const firstMs = draw();
+requestAnimationFrame(() => say(JSON.stringify({ firstSetDataMs: firstMs, ...S4.state() })));
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g stroke="#3a2d22" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- long tail -->
+    <path d="M318 432 C404 444 446 392 420 340 C408 316 386 318 384 336" fill="none" stroke-width="30"/>
+    <path d="M318 432 C404 444 446 392 420 340 C408 316 386 318 384 336" fill="none" stroke="#8b7a64" stroke-width="18"/>
+    <!-- pink ears -->
+    <circle cx="126" cy="214" r="30" fill="#f0b4a2"/>
+    <circle cx="386" cy="214" r="30" fill="#f0b4a2"/>
+    <circle cx="124" cy="214" r="14" fill="#e08f7e" stroke="none"/>
+    <circle cx="388" cy="214" r="14" fill="#e08f7e" stroke="none"/>
+    <!-- body, arms with pink hands, feet -->
+    <ellipse cx="256" cy="386" rx="82" ry="82" fill="#8b7a64"/>
+    <ellipse cx="256" cy="402" rx="48" ry="52" fill="#b6a48c" stroke="none"/>
+    <ellipse cx="182" cy="382" rx="22" ry="42" fill="#8b7a64" transform="rotate(18 182 382)"/>
+    <ellipse cx="330" cy="382" rx="22" ry="42" fill="#8b7a64" transform="rotate(-18 330 382)"/>
+    <circle cx="168" cy="422" r="15" fill="#f0b4a2"/>
+    <circle cx="344" cy="422" r="15" fill="#f0b4a2"/>
+    <ellipse cx="216" cy="466" rx="32" ry="18" fill="#7a6a56"/>
+    <ellipse cx="296" cy="466" rx="32" ry="18" fill="#7a6a56"/>
+    <!-- head with fur tuft -->
+    <path d="M222 112 Q232 70 252 92 Q262 64 274 94 Q292 74 292 112Z" fill="#8b7a64"/>
+    <ellipse cx="256" cy="206" rx="128" ry="116" fill="#8b7a64"/>
+    <!-- heart-shaped pink face -->
+    <path d="M256 304 C204 304 166 274 168 226 C170 188 204 168 232 180 Q256 192 280 180 C308 168 342 188 344 226 C346 274 308 304 256 304Z" fill="#f2b8a6"/>
+    <path d="M190 198 Q214 182 240 196 M272 196 Q298 182 322 198" fill="none" stroke="#d99482" stroke-width="5"/>
+    <g stroke="none">
+      <ellipse cx="256" cy="264" rx="40" ry="28" fill="#f7cbbd"/>
+      <ellipse cx="214" cy="224" rx="15" ry="19" fill="#2b1d14"/>
+      <ellipse cx="298" cy="224" rx="15" ry="19" fill="#2b1d14"/>
+      <circle cx="219" cy="216" r="5.5" fill="#fff"/><circle cx="303" cy="216" r="5.5" fill="#fff"/>
+      <circle cx="210" cy="232" r="2.5" fill="#fff"/><circle cx="294" cy="232" r="2.5" fill="#fff"/>
+      <circle cx="249" cy="254" r="3" fill="#8a4a3c"/><circle cx="263" cy="254" r="3" fill="#8a4a3c"/>
+      <ellipse cx="190" cy="258" rx="16" ry="9" fill="#ff7f7f" opacity=".45"/>
+      <ellipse cx="322" cy="258" rx="16" ry="9" fill="#ff7f7f" opacity=".45"/>
+    </g>
+    <path d="M240 274 Q256 286 272 274" fill="none" stroke="#8a4a3c" stroke-width="4"/>
+  </g>
+</svg>

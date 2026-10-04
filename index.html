@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#14322b">
+<title>台灣大富翁</title>
+<link rel="icon" href="assets/placeholders/char-bear.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/game.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+    "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+    "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js",
+    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.15.0/+esm",
+    "gsap/SplitText.js": "https://cdn.jsdelivr.net/npm/gsap@3.15.0/SplitText.js/+esm",
+    "lightweight-charts": "https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.mjs",
+    "zzfx": "https://cdn.jsdelivr.net/npm/zzfx@1.4.0/ZzFX.js",
+    "tone": "https://cdn.jsdelivr.net/npm/tone@15.1.22/+esm",
+    "canvas-confetti": "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.module.mjs",
+    "fireworks-js": "https://cdn.jsdelivr.net/npm/fireworks-js@2.10.8/+esm",
+    "qr-code-styling": "https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/+esm",
+    "driver.js": "https://cdn.jsdelivr.net/npm/driver.js@1.9.0/+esm",
+    "html-to-image": "https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm",
+    "atropos": "https://cdn.jsdelivr.net/npm/atropos@2.0.2/atropos.mjs",
+    "@floating-ui/dom": "https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.8.0/+esm",
+    "lucide/": "https://cdn.jsdelivr.net/npm/lucide@1.51.0/dist/esm/",
+    "zod": "https://cdn.jsdelivr.net/npm/zod@4.6.5/+esm",
+    "zod/mini": "https://cdn.jsdelivr.net/npm/zod@4.6.5/mini/+esm",
+    "peerjs": "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/+esm"
+  }
+}
+</script>
+</head>
+<body>
+<div id="boot" class="boot" role="status">
+  <div class="boot-card">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>載入中… Loading…</p>
+  </div>
+</div>
+
+<header id="topbar" class="topbar" hidden>
+  <div class="brand">
+    <img class="brand-logo" src="assets/placeholders/char-bear.svg" alt="">
+    <span data-i="ui.boardTitle"></span>
+  </div>
+  <div class="top-info">
+    <span id="round-chip" class="chip" hidden></span>
+    <span id="host-chip" class="chip chip-host" hidden></span>
+    <span id="net-chip" class="chip chip-warn" hidden></span>
+  </div>
+  <div class="top-actions">
+    <button id="btn-tour" class="icon-btn" type="button" data-icon="circle-question-mark" data-i-label="ui.tour"></button>
+    <button id="btn-lang" class="icon-btn" type="button" data-icon="languages" data-i-label="ui.language"></button>
+    <button id="btn-sound" class="icon-btn" type="button" data-icon="volume-2" data-i-label="ui.sound"></button>
+    <button id="btn-settings" class="icon-btn" type="button" data-icon="settings" data-i-label="ui.settings"></button>
+  </div>
+</header>
+
+<main id="main">
+  <section id="lobby" class="lobby" hidden>
+    <div class="lobby-hero">
+      <h1 data-i="ui.boardTitle"></h1>
+      <p data-i="ui.lobbyTagline"></p>
+    </div>
+    <div class="lobby-grid">
+      <div class="lobby-main">
+        <form id="name-form" class="name-field">
+          <label for="name-input" data-i="ui.yourName"></label>
+          <input id="name-input" name="name" maxlength="16" autocomplete="nickname" required>
+          <button type="submit" class="btn" data-i="ui.save"></button>
+        </form>
+        <p id="lobby-note" class="lobby-note" aria-live="polite"></p>
+        <div id="char-grid" class="char-grid"></div>
+      </div>
+      <aside class="lobby-side">
+        <div class="card">
+          <h2 data-i="ui.roomSettings"></h2>
+          <label class="row-field" for="rounds-select"><span data-i="ui.rounds"></span>
+            <select id="rounds-select"></select>
+          </label>
+          <button id="btn-start" class="btn btn-primary btn-wide" type="button" data-i="ui.start"></button>
+          <p id="start-note" class="muted small"></p>
+        </div>
+        <div class="card">
+          <h2 data-i="ui.invite"></h2>
+          <div id="qr" class="qr"></div>
+          <button id="btn-copy-link" class="btn btn-wide" type="button" data-i="ui.copyLink"></button>
+        </div>
+        <div class="card">
+          <h2 data-i="ui.spectators"></h2>
+          <ul id="spectator-list" class="name-list"></ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="game" class="game" hidden>
+    <div id="stage" class="stage">
+      <div id="board" class="board"></div>
+      <div id="dice2d" class="dice2d" hidden></div>
+      <div id="card-pop" class="card-pop" hidden></div>
+      <div id="ticker" class="ticker" hidden></div>
+      <div id="spectate-banner" class="spectate-banner" hidden></div>
+      <div class="board-tools">
+        <button id="btn-view-reset" class="icon-btn" type="button" data-icon="rotate-ccw" data-i-label="ui.resetView"></button>
+      </div>
+    </div>
+    <div id="dock" class="dock"></div>
+    <aside id="side" class="side">
+      <div id="players" class="players"></div>
+      <div class="tabs" role="tablist">
+        <button id="tab-market" class="tab" type="button" role="tab" aria-controls="panel-market" data-tab="market"><span data-icon="chart-candlestick"></span><span data-i="ui.tabMarket"></span></button>
+        <button id="tab-log" class="tab" type="button" role="tab" aria-controls="panel-log" data-tab="log"><span data-icon="scroll-text"></span><span data-i="ui.tabLog"></span></button>
+        <button id="tab-chat" class="tab" type="button" role="tab" aria-controls="panel-chat" data-tab="chat"><span data-icon="message-circle"></span><span data-i="ui.tabChat"></span><span id="chat-badge" class="badge" hidden></span></button>
+      </div>
+      <div id="panel-market" class="panel" role="tabpanel" aria-labelledby="tab-market"></div>
+      <div id="panel-log" class="panel" role="tabpanel" aria-labelledby="tab-log" hidden></div>
+      <div id="panel-chat" class="panel" role="tabpanel" aria-labelledby="tab-chat" hidden></div>
+    </aside>
+  </section>
+</main>
+
+<div id="conn" class="conn" role="status" hidden></div>
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<footer class="credit" data-i="ui.madeBy"></footer>
+
+<script>
+  // Shown when the module graph cannot load at all (old browser, file blocked).
+  window.bootFail = function () {
+    var boot = document.getElementById('boot');
+    if (!boot) return;
+    boot.hidden = false;
+    boot.innerHTML = '<div class="boot-card"><p>無法載入遊戲，請改用新版 Chrome、Edge、Safari 或 Firefox 後重新整理。</p>'
+      + '<p>The game could not load. Please use a recent browser and reload.</p>'
+      + '<button class="btn btn-primary" onclick="location.reload()">重新整理 / Reload</button></div>';
+  };
+</script>
+<script type="module" src="js/main.js" onerror="bootFail()"></script>
+<script nomodule>bootFail();</script>
+</body>
+</html>

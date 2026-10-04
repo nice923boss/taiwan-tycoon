@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S2/S3 棋盤與骰子</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+    "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+    "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js",
+    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.15.0/+esm"
+  }
+}
+</script>
+<style>
+  html, body { margin: 0; height: 100%; background: #1b2723; color: #eee; font: 14px system-ui, sans-serif; overflow: hidden; }
+  #ui { position: fixed; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 2; }
+  #ui button { font: inherit; padding: 6px 10px; }
+  #out { position: fixed; bottom: 8px; left: 8px; max-width: 46vw; white-space: pre-wrap; background: rgba(0,0,0,.6); padding: 6px 8px; margin: 0; z-index: 2; }
+  #flat { position: fixed; top: 48px; right: 8px; width: 45vmin; height: 45vmin; display: none; z-index: 2; border: 1px solid #999; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <button id="roll">擲骰</button>
+  <button id="lang">切換語系</button>
+  <button id="batch">300 次測試</button>
+  <button id="fps">FPS 測試</button>
+  <button id="flatBtn">2D 預覽</button>
+</div>
+<canvas id="flat"></canvas>
+<pre id="out"></pre>
+<script type="module">
+import * as THREE from 'three';
+import { gsap } from 'gsap';
+import { paintBoard, squareCenter, CORNER } from '../../js/ui/board-paint.js';
+import { createDice } from '../../js/ui/dice3d.js';
+import { setLang, getLang, onLangChange } from '../../js/i18n/i18n.js';
+
+const out = document.getElementById('out');
+const say = (s) => { out.textContent = s; };
+const BOARD = 10;
+const TEX = 2048;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#1b2723');
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 12.5, 9.5);
+camera.lookAt(0, 0, 0.5);
+
+scene.add(new THREE.HemisphereLight(0xfff4e0, 0x3a3a3a, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(4, 10, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 30 });
+scene.add(sun);
+
+// Board: wooden box + painted top.
+const boardCanvas = document.createElement('canvas');
+boardCanvas.width = TEX;
+boardCanvas.height = TEX;
+const boardTex = new THREE.CanvasTexture(boardCanvas);
+boardTex.colorSpace = THREE.SRGBColorSpace;
+boardTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const base = new THREE.Mesh(new THREE.BoxGeometry(BOARD + 0.3, 0.35, BOARD + 0.3), new THREE.MeshStandardMaterial({ color: '#6b4a2f', roughness: 0.8 }));
+base.position.y = -0.176;
+base.receiveShadow = true;
+scene.add(base);
+const top = new THREE.Mesh(new THREE.PlaneGeometry(BOARD, BOARD), new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.9 }));
+top.rotation.x = -Math.PI / 2;
+top.receiveShadow = true;
+scene.add(top);
+
+function repaint() {
+  const t0 = performance.now();
+  paintBoard(boardCanvas.getContext('2d'), TEX);
+  boardTex.needsUpdate = true;
+  return Math.round(performance.now() - t0);
+}
+let paintMs = repaint();
+onLangChange(() => { paintMs = repaint(); paintFlat(); });
+
+// Dice tray = inner area of the board.
+const inner = BOARD / 2 - BOARD * CORNER - 0.25;
+const dice = createDice({ size: 0.6, tray: { halfX: inner, halfZ: inner } });
+dice.meshes.forEach((m) => scene.add(m));
+
+// Standee token.
+function standeeTexture(color, glyph) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 320;
+  const x = c.getContext('2d');
+  x.fillStyle = color;
+  x.beginPath(); x.arc(128, 128, 120, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(128, 128, 100, 0, Math.PI * 2); x.fill();
+  x.font = '130px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(glyph, 128, 136);
+  x.fillStyle = color; x.fillRect(118, 240, 20, 80);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const token = new THREE.Group();
+const card = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.8), new THREE.MeshStandardMaterial({ map: standeeTexture('#e8453c', '🐻'), alphaTest: 0.5, side: THREE.DoubleSide }));
+card.position.y = 0.46;
+card.castShadow = true;
+const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.07, 24), new THREE.MeshStandardMaterial({ color: '#e8453c' }));
+foot.position.y = 0.035;
+foot.castShadow = true;
+token.add(card, foot);
+scene.add(token);
+
+const toWorld = (i) => {
+  const c = squareCenter(i, TEX);
+  return { x: (c.x / TEX) * BOARD - BOARD / 2, z: (c.y / TEX) * BOARD - BOARD / 2 };
+};
+let pos = 0;
+Object.assign(token.position, { ...toWorld(0), y: 0 });
+
+function hop(steps) {
+  const tl = gsap.timeline();
+  for (let s = 1; s <= steps; s += 1) {
+    const w = toWorld((pos + s) % 40);
+    tl.to(token.position, { x: w.x, z: w.z, duration: 0.2, ease: 'none' });
+    tl.to(token.position, { y: 0.45, duration: 0.1, ease: 'power2.out', yoyo: true, repeat: 1 }, '<');
+  }
+  pos = (pos + steps) % 40;
+  return tl.then();
+}
+
+// Render loop with frame-interval capture.
+let frameLog = null;
+let lastT = performance.now();
+renderer.setAnimationLoop((now) => {
+  if (frameLog) frameLog.push(now - lastT);
+  lastT = now;
+  dice.update(now);
+  token.rotation.y = Math.atan2(camera.position.x - token.position.x, camera.position.z - token.position.z);
+  renderer.render(scene, camera);
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const d6 = () => 1 + Math.floor(Math.random() * 6);
+let impacts = 0;
+async function rollOnce(values = [d6(), d6()]) {
+  const t0 = performance.now();
+  const info = await dice.roll(values, { onImpact: () => { impacts += 1; } });
+  const settleMs = Math.round(performance.now() - t0);
+  const shown = dice.topValues();
+  await hop(values[0] + values[1]);
+  return { values, shown, settleMs, ...info };
+}
+
+// Q2 + Q4: 300 throws, final pose only (no rendering needed).
+async function runBatch(n = 300) {
+  const t0 = performance.now();
+  const steps = [];
+  let ok = 0; let fallback = 0; let maxAttempts = 0; let attemptsSum = 0;
+  const bad = [];
+  for (let k = 0; k < n; k += 1) {
+    const values = [d6(), d6()];
+    const info = await dice.roll(values, { reduced: true });
+    const shown = dice.topValues();
+    if (shown[0] === values[0] && shown[1] === values[1]) ok += 1;
+    else bad.push({ values, shown });
+    if (info.fallback) fallback += 1;
+    else steps.push(info.steps);
+    maxAttempts = Math.max(maxAttempts, info.attempts);
+    attemptsSum += info.attempts;
+  }
+  steps.sort((a, b) => a - b);
+  const sec = (s) => +(s / 60).toFixed(2);
+  return {
+    n, ok, bad: bad.slice(0, 5), fallback,
+    settleSec: { min: sec(steps[0]), median: sec(steps[steps.length >> 1]), p95: sec(steps[Math.floor(steps.length * 0.95)]), max: sec(steps[steps.length - 1]) },
+    attempts: { mean: +(attemptsSum / n).toFixed(2), max: maxAttempts },
+    totalMs: Math.round(performance.now() - t0),
+  };
+}
+
+// Q3: rolls back to back while recording frame intervals.
+async function fpsTest(ms = 10000) {
+  frameLog = [];
+  const end = performance.now() + ms;
+  let rolls = 0;
+  while (performance.now() < end) { await rollOnce(); rolls += 1; }
+  const iv = frameLog.slice(5).sort((a, b) => a - b);
+  frameLog = null;
+  const med = iv[iv.length >> 1];
+  return {
+    frames: iv.length, rolls, medianFps: +(1000 / med).toFixed(1),
+    p95FrameMs: +iv[Math.floor(iv.length * 0.95)].toFixed(1), worstFrameMs: +iv[iv.length - 1].toFixed(1),
+    viewport: `${innerWidth}x${innerHeight}@${renderer.getPixelRatio()}`, hidden: document.hidden,
+  };
+}
+
+const flat = document.getElementById('flat');
+function paintFlat() {
+  if (flat.style.display !== 'block') return;
+  const px = Math.round(flat.clientWidth * devicePixelRatio);
+  flat.width = px; flat.height = px;
+  paintBoard(flat.getContext('2d'), px);
+}
+
+const gl = renderer.getContext();
+let benchClock = 0; // fake frame clock for benchRender, kept across runs
+const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+window.S2 = {
+  rollOnce, runBatch, fpsTest, repaint,
+  setLang: (c) => { setLang(c); return { lang: getLang(), paintMs }; },
+  info: () => ({ gpu: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'n/a', maxTex: renderer.capabilities.maxTextureSize, aniso: renderer.capabilities.getMaxAnisotropy(), paintMs, impacts }),
+  // Human check: top-down camera so pips can be compared with the expected values.
+  topView: async (values) => {
+    // Height 10.5 keeps the whole tray (half-width 3.45) in view at fov 38.
+    camera.position.set(0, 10.5, 0.001); camera.lookAt(0, 0, 0);
+    await dice.roll(values, { reduced: true });
+    renderer.render(scene, camera);
+    say(`預期點數：${values.join(' + ')}，畫面讀到：${dice.topValues().join(' + ')}`);
+  },
+  resetView: () => { camera.position.set(0, 12.5, 9.5); camera.lookAt(0, 0, 0.5); renderer.render(scene, camera); },
+  // Fallback for Q3 when rAF is paused (hidden pane): average cost of
+  // dice update + render over batches of `batch` frames; one readPixels per
+  // batch forces the GPU to finish, so its sync wait is spread over the batch.
+  benchRender: (n = 600, batch = 30) => {
+    const px = new Uint8Array(4);
+    const times = [];
+    for (let k = 0; k < n; k += batch) {
+      const t0 = performance.now();
+      for (let j = 0; j < batch; j += 1) {
+        if (!dice.isRolling()) dice.roll([d6(), d6()]);
+        benchClock += 1000 / 60;
+        dice.update(benchClock);
+        renderer.render(scene, camera);
+      }
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      times.push((performance.now() - t0) / batch);
+    }
+    times.sort((a, b) => a - b);
+    const q = (p) => +times[Math.floor((times.length - 1) * p)].toFixed(2);
+    return { frames: n, medianMs: q(0.5), p95Ms: q(0.95), maxMs: q(1), viewport: `${innerWidth}x${innerHeight}@${renderer.getPixelRatio()}` };
+  },
+  showFlat: (on = true) => { flat.style.display = on ? 'block' : 'none'; paintFlat(); },
+};
+
+document.getElementById('roll').onclick = async () => say(JSON.stringify(await rollOnce()));
+document.getElementById('lang').onclick = () => say(JSON.stringify(S2.setLang(getLang() === 'en' ? 'zh-TW' : 'en')));
+document.getElementById('batch').onclick = async () => say(JSON.stringify(await runBatch(), null, 1));
+document.getElementById('fps').onclick = async () => say(JSON.stringify(await fpsTest(), null, 1));
+document.getElementById('flatBtn').onclick = () => S2.showFlat(flat.style.display !== 'block');
+say(`就緒。棋盤繪製 ${paintMs} ms`);
+</script>
+</body>
+</html>

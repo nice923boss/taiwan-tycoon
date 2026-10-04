@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="base" cx=".5" cy=".5" r=".75">
+      <stop offset="0" stop-color="#1f4c59"/>
+      <stop offset=".55" stop-color="#1a3352"/>
+      <stop offset="1" stop-color="#151a3b"/>
+    </radialGradient>
+    <pattern id="clouds" width="160" height="120" patternUnits="userSpaceOnUse">
+      <path d="M0 40 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M40 40 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M80 40 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M120 40 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M-20 100 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M20 100 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M60 100 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M100 100 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0 M140 100 a20 20 0 0 1 40 0 a10 10 0 0 1 -20 0" fill="none" stroke="#b3e6dc" stroke-width="2.5" stroke-linecap="round"/>
+      <g fill="#b3e6dc"><circle cx="0" cy="65" r="2.5"/><circle cx="80" cy="65" r="2.5"/><circle cx="160" cy="65" r="2.5"/><circle cx="40" cy="5" r="2.5"/><circle cx="120" cy="5" r="2.5"/></g>
+    </pattern>
+    <radialGradient id="vignette" cx=".5" cy=".5" r=".75">
+      <stop offset=".55" stop-color="#070a1c" stop-opacity="0"/>
+      <stop offset="1" stop-color="#070a1c" stop-opacity=".55"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#base)"/>
+  <rect width="1920" height="1080" fill="url(#clouds)" opacity=".08"/>
+  <rect width="1920" height="1080" fill="url(#vignette)"/>
+</svg>

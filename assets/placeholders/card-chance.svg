@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="768" viewBox="0 0 512 768">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb84d"/>
+      <stop offset="1" stop-color="#e5681a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff3c4" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#fff3c4" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="diamonds" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M24 16 L32 24 L24 32 L16 24Z" fill="#fff" opacity=".14"/>
+    </pattern>
+    <clipPath id="card"><rect width="512" height="768" rx="32"/></clipPath>
+  </defs>
+  <g clip-path="url(#card)">
+    <rect width="512" height="768" fill="url(#bg)"/>
+    <rect width="512" height="768" fill="url(#diamonds)"/>
+    <circle cx="256" cy="384" r="300" fill="url(#glow)"/>
+    <!-- sunburst rays (dashed ring) -->
+    <circle cx="256" cy="384" r="210" fill="none" stroke="#fff6dc" stroke-width="100" stroke-dasharray="20 62.47" opacity=".22"/>
+  </g>
+  <!-- double frame -->
+  <rect x="24" y="24" width="464" height="720" rx="20" fill="none" stroke="#fff1c9" stroke-width="6"/>
+  <rect x="38" y="38" width="436" height="692" rx="12" fill="none" stroke="#fff1c9" stroke-width="2" opacity=".75"/>
+  <!-- corner sparkles -->
+  <g fill="#fff1c9">
+    <path d="M70 52 L74 66 L88 70 L74 74 L70 88 L66 74 L52 70 L66 66Z"/>
+    <path d="M442 52 L446 66 L460 70 L446 74 L442 88 L438 74 L424 70 L438 66Z"/>
+    <path d="M70 680 L74 694 L88 698 L74 702 L70 716 L66 702 L52 698 L66 694Z"/>
+    <path d="M442 680 L446 694 L460 698 L446 702 L442 716 L438 702 L424 698 L438 694Z"/>
+  </g>
+  <!-- medallion -->
+  <circle cx="256" cy="384" r="150" fill="#fff4d6" stroke="#c4511a" stroke-width="8"/>
+  <circle cx="256" cy="384" r="132" fill="none" stroke="#f0a24a" stroke-width="4" stroke-dasharray="10 12"/>
+  <!-- question mark glyph drawn as paths (shadow, then face) -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="40">
+    <path d="M208 352 Q208 292 260 292 Q312 292 312 342 Q312 374 282 390 Q260 402 260 428 V436" stroke="#b8460f"/>
+    <path d="M204 346 Q204 286 256 286 Q308 286 308 336 Q308 368 278 384 Q256 396 256 422 V430" stroke="#f07a1e"/>
+  </g>
+  <circle cx="260" cy="490" r="23" fill="#b8460f"/>
+  <circle cx="256" cy="484" r="23" fill="#f07a1e"/>
+</svg>

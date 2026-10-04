@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g stroke="#3a2513" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- long ringed tail with dark tip -->
+    <path d="M318 430 C410 446 456 380 424 300 C414 276 400 268 392 276" fill="none" stroke-width="42"/>
+    <path d="M318 430 C410 446 456 380 424 300 C414 276 400 268 392 276" fill="none" stroke="#d99f5a" stroke-width="30"/>
+    <path d="M318 430 C410 446 456 380 424 300 C414 276 400 268 392 276" fill="none" stroke="#4e321b" stroke-width="30" stroke-dasharray="12 22" stroke-linecap="butt"/>
+    <circle cx="393" cy="276" r="15" fill="#4e321b" stroke="none"/>
+    <!-- rounded ears: dark backs with white spot -->
+    <circle cx="156" cy="116" r="40" fill="#4e321b"/>
+    <circle cx="356" cy="116" r="40" fill="#4e321b"/>
+    <circle cx="156" cy="112" r="14" fill="#fff" stroke="none"/>
+    <circle cx="356" cy="112" r="14" fill="#fff" stroke="none"/>
+    <!-- body, arms, feet -->
+    <ellipse cx="256" cy="386" rx="84" ry="82" fill="#d99f5a"/>
+    <ellipse cx="256" cy="402" rx="50" ry="56" fill="#f8ecd4" stroke="none"/>
+    <g fill="#4e321b" stroke="none">
+      <ellipse cx="196" cy="358" rx="8" ry="6"/><ellipse cx="186" cy="392" rx="8" ry="6"/>
+      <ellipse cx="202" cy="426" rx="8" ry="6"/><ellipse cx="316" cy="358" rx="8" ry="6"/>
+      <ellipse cx="326" cy="392" rx="8" ry="6"/><ellipse cx="310" cy="426" rx="8" ry="6"/>
+      <circle cx="240" cy="388" r="4"/><circle cx="272" cy="412" r="4"/><circle cx="244" cy="432" r="4"/>
+    </g>
+    <ellipse cx="184" cy="380" rx="22" ry="38" fill="#d99f5a" transform="rotate(22 184 380)"/>
+    <ellipse cx="328" cy="380" rx="22" ry="38" fill="#d99f5a" transform="rotate(-22 328 380)"/>
+    <ellipse cx="216" cy="466" rx="32" ry="18" fill="#f8ecd4"/>
+    <ellipse cx="296" cy="466" rx="32" ry="18" fill="#f8ecd4"/>
+    <!-- head -->
+    <ellipse cx="256" cy="214" rx="136" ry="114" fill="#d99f5a"/>
+    <g fill="#4e321b" stroke="none">
+      <circle cx="176" cy="150" r="5"/><circle cx="196" cy="130" r="5"/>
+      <circle cx="316" cy="130" r="5"/><circle cx="336" cy="150" r="5"/>
+    </g>
+    <!-- forehead stripes: white between dark -->
+    <path d="M232 190 Q228 148 240 112 M280 190 Q284 148 272 112" fill="none" stroke="#fff" stroke-width="9"/>
+    <path d="M214 186 Q210 146 222 114 M298 186 Q302 146 290 114 M256 176 V108" fill="none" stroke="#4e321b" stroke-width="7"/>
+    <!-- cheek stripes -->
+    <path d="M134 222 Q150 226 160 240 M138 252 Q152 252 162 262 M378 222 Q362 226 352 240 M374 252 Q360 252 350 262" fill="none" stroke="#4e321b" stroke-width="6"/>
+    <!-- eyes with white rings -->
+    <ellipse cx="198" cy="214" rx="28" ry="32" fill="#fff8ec" stroke="none"/>
+    <ellipse cx="314" cy="214" rx="28" ry="32" fill="#fff8ec" stroke="none"/>
+    <ellipse cx="198" cy="216" rx="20" ry="24" fill="#7d9a35" stroke-width="4"/>
+    <ellipse cx="314" cy="216" rx="20" ry="24" fill="#7d9a35" stroke-width="4"/>
+    <g stroke="none">
+      <ellipse cx="199" cy="218" rx="11" ry="17" fill="#1d1810"/>
+      <ellipse cx="313" cy="218" rx="11" ry="17" fill="#1d1810"/>
+      <circle cx="205" cy="208" r="6" fill="#fff"/><circle cx="319" cy="208" r="6" fill="#fff"/>
+      <circle cx="193" cy="228" r="3" fill="#fff"/><circle cx="307" cy="228" r="3" fill="#fff"/>
+      <!-- white muzzle and blush -->
+      <ellipse cx="238" cy="264" rx="30" ry="22" fill="#f8ecd4"/>
+      <ellipse cx="274" cy="264" rx="30" ry="22" fill="#f8ecd4"/>
+      <ellipse cx="172" cy="270" rx="16" ry="9" fill="#ff8da1" opacity=".5"/>
+      <ellipse cx="340" cy="270" rx="16" ry="9" fill="#ff8da1" opacity=".5"/>
+    </g>
+    <path d="M246 246 L266 246 L256 258Z" fill="#e98a8a" stroke-width="4"/>
+    <path d="M256 258 V264 M242 266 Q249 274 256 264 Q263 274 270 266" fill="none" stroke-width="4"/>
+    <path d="M208 262 L172 254 M208 274 L174 280 M304 262 L340 254 M304 274 L338 280" fill="none" stroke-width="3" opacity=".7"/>
+  </g>
+</svg>

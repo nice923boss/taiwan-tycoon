@@ -1,0 +1,158 @@
+# 台灣大富翁 Online
+
+瀏覽器上的多人連線大富翁，台灣城市主題，6 位台灣動物角色（台灣黑熊、石虎、台灣藍鵲、穿山甲、台灣獼猴、梅花鹿）。
+純前端、不需建置、不需後端伺服器，玩家之間用 PeerJS（WebRTC）直接連線。
+
+- 單一房間：最多 6 位玩家，額滿或開局後進來的人自動成為觀戰者（房間連線上限 24）。
+- 規則：起始 $1,500、經過起點 $200、15 / 25 / 40 回合三種長度，含拍賣、抵押、蓋房、交易、機會與命運卡。
+- 行情：每回合變動的股票，可買賣、領股利，結算時列入總資產。
+- 中文 / English 隨時在設定切換，系統文字（介面、紀錄、提示）即時改變。玩家聊天內容不翻譯。
+- 3D 棋盤與物理骰子；設定可切換 2D，WebGL 不可用時自動改用 2D。
+- 有人離線時由電腦代打，30 秒後觀戰者可接手（見下方「離線座位」）。
+
+## 能放上 GitHub Pages 正常運作嗎？
+
+可以。理由與證據：
+
+| 條件 | 本專案的做法 | 證據 |
+|------|------------|------|
+| GitHub Pages 只提供靜態檔案 | 全部是 HTML / CSS / JS 與圖片，沒有伺服器程式 | 專案內沒有任何後端檔案 |
+| 不能跑建置步驟 | 第三方函式庫用 import map 從 jsDelivr 載入並鎖定版本 | `dev-log/spikes/2026-10-04-lib-cdn-check.md` |
+| 專案網址在子路徑（`/儲存庫名稱/`） | 所有路徑皆為相對路徑 | `index.html`、`js/`、`css/` 內沒有以 `/` 開頭的資源路徑 |
+| 多人連線需要伺服器 | 用 PeerJS 公用信令伺服器（0.peerjs.com）配對，配對後瀏覽器之間直接傳資料 | `dev-log/spikes/2026-10-04-session-real-network.md`：3 個分頁經 0.peerjs.com 連線、開局、擲骰；主機分頁關閉後 614 ms 由下一位接任主機，遊戲狀態一致 |
+| 不能放金鑰 | 不使用任何需要金鑰的服務 | 專案內沒有 API 金鑰 |
+
+限制（詳見 `GAPS.md`）：
+
+- 上述連線測試是同一台電腦的 3 個分頁。跨網路（手機 4G、公司防火牆）尚未實測，部分網路可能連不上（G2）。
+- 主機分頁卡死、手機切到背景被凍結時，約 100 秒後才能換主機；正常關閉或重新整理只需約 0.6 秒（G1）。
+- 主機分頁握有完整遊戲狀態，沒有伺服器仲裁，無法防作弊（G7）。適合朋友之間遊玩。
+
+## 部署步驟
+
+換到另一台電腦接手生圖與上架時，照 `HANDOFF.md` 的提示詞與步驟進行。
+
+1. 在 GitHub 建立新的公開儲存庫（名稱建議見文末「名稱與商標」）。
+2. 上傳本資料夾內容，**不要上傳** `node_modules/` 與 `.claude/`（本機開發設定），`.gitignore` 皆已排除。
+   `index.html` 要在儲存庫根目錄；根目錄的 `.nojekyll`（空檔，關閉 GitHub 的 Jekyll 處理）要一起上傳。
+3. 儲存庫的 Settings → Pages → Build and deployment：Source 選「Deploy from a branch」，Branch 選 `main`、資料夾選 `/ (root)`，按 Save。
+4. 等 1 到 2 分鐘，網址為 `https://你的帳號.github.io/儲存庫名稱/`。
+
+## 邀請朋友
+
+- 同一個網址就是同一個房間。在大廳按「複製邀請連結」或讓朋友掃 QR Code。
+- 想開另一個獨立房間，在網址後加 `?room=名稱`（小寫英數字與 `-`，最多 24 字），例如 `?room=family`。
+- 第一位進入的人自動成為主機。主機離開時，下一位玩家自動接任，遊戲繼續。
+
+## 本機執行與測試
+
+需要 Python（本機伺服器）與 Node.js 22 以上（測試指令用到檔名萬用字元，本機以 v24.17.0 驗證）。ES 模組不能用 `file://` 直接開啟，必須透過伺服器。
+
+```bash
+npm run serve
+```
+
+開啟 `http://localhost:5173/`。多開幾個分頁就能模擬多位玩家（本機測試仍會連到 0.peerjs.com 配對）。
+
+```bash
+npm install
+```
+
+```bash
+npm test
+```
+
+目前 124 項測試，涵蓋規則引擎、股市、交易、電腦代打、通訊協定驗證、主機與換主機流程、中英字串完整性。
+
+## 放入 ComfyUI 生圖
+
+1. 依 `PROMPTS.md` 產生 11 張圖。
+2. 用下列檔名存成 PNG，放進 `assets/generated/`：
+   `char-bear`、`char-leopardcat`、`char-magpie`、`char-pangolin`、`char-macaque`、`char-deer`、`bg-lobby`、`bg-table`、`board-center`、`card-chance`、`card-fate`（皆加 `.png`）。
+3. 不需改程式。遊戲先載入 `assets/generated/` 的 PNG，缺的那張改用 `assets/placeholders/` 的 SVG 佔位圖，可以一張一張替換。
+
+尚未放入的圖，瀏覽器主控台會出現一次 404，屬正常現象，放入 PNG 後就會消失。
+
+## 離線座位：電腦代打與接手
+
+| 情況 | 處理 |
+|------|------|
+| 玩家斷線 8 秒 | 電腦開始代打，玩家名稱旁顯示「電腦代打」，每一步約 1.5 秒（接在別人動作之後為 1.5 到 2 秒） |
+| 斷線滿 30 秒 | 觀戰者畫面出現「接手 玩家名稱」按鈕，確認後入座，先按先得 |
+| 電腦的策略（保守型） | 正常擲骰；買地後現金仍有 $300 以上才買；拍賣一律放棄；不主動買賣股票；交易一律拒絕；欠債時依序賣股票、抵押、賣房還款，還不出來就破產 |
+| 原玩家回來，座位沒被接手 | 拿回座位，電腦停止代打 |
+| 原玩家回來，座位已被接手 | 成為觀戰者 |
+
+## 更新版本時
+
+通訊協定目前為第 2 版。部署新版後，所有人都要重新整理頁面；版本不同的分頁會被主機拒絕並顯示提示。
+
+## 已知限制
+
+完整清單與補完時點見 `GAPS.md`，主要幾項：
+
+- 跨網路連線未實測（G2）。
+- 主機卡死時換主機約需 100 秒（G1）。
+- 聊天內容不翻譯，切換語系只改系統文字（G8，需要翻譯 API 金鑰，公開頁面不放金鑰）。
+- 電腦代打只用保守策略（G17）；接手後，接手前的紀錄也顯示接手者的名字（G19）。
+- 生成圖所用的模型轉檔（fp8 量化檔、重新打包的文字編碼器）沒有書面授權標示，VAE 檔來源未記錄；原始模型皆有 Apache-2.0 版本（G25）。
+
+## 第三方函式庫與授權
+
+皆從 jsDelivr 載入，版本鎖定於 `index.html` 的 import map。
+
+| 函式庫 | 版本 | 授權 |
+|--------|------|------|
+| Three.js | 0.186.1 | MIT |
+| cannon-es | 0.20.0 | MIT |
+| GSAP | 3.15.0 | GSAP 標準授權（免費，含商用） |
+| Lightweight Charts（TradingView） | 5.2.1 | Apache-2.0 |
+| ZzFX | 1.4.0 | MIT |
+| Tone.js | 15.1.22 | MIT |
+| canvas-confetti | 1.9.4 | ISC |
+| fireworks-js | 2.10.8 | MIT |
+| qr-code-styling | 1.9.2 | MIT |
+| Driver.js | 1.9.0 | MIT |
+| html-to-image | 1.11.13 | MIT |
+| Atropos | 2.0.2 | MIT |
+| Floating UI | 1.8.0 | MIT |
+| Lucide | 1.51.0 | ISC |
+| Zod | 4.6.5 | MIT |
+| PeerJS | 1.5.5 | MIT |
+
+行情圖表使用 [TradingView Lightweight Charts](https://www.tradingview.com/lightweight-charts/)，圖表上保留 TradingView 標誌與連結。
+
+`assets/generated/` 的圖由本機 ComfyUI 產生，未使用 LoRA 或放大模型：
+
+| 用途 | 模型 | 授權 |
+|------|------|------|
+| 生圖主模型 | Z-Image-Turbo（Tongyi-MAI，本機用第三方 fp8 量化檔） | Apache-2.0 |
+| 文字編碼器 | Qwen3-4B（ComfyUI 重新打包檔） | Apache-2.0 |
+| VAE | FLUX.1 的 ae.safetensors（Black Forest Labs） | FLUX.1-schnell 版為 Apache-2.0（本機檔來源未記錄，見 G25） |
+| 去背模型 | U-2-Net（u2net，透過 rembg） | Apache-2.0（rembg 為 MIT） |
+
+量化檔與重新打包檔的轉檔者沒有另外標示授權，VAE 檔的下載來源也沒有紀錄，見 `GAPS.md` G25。每張圖的提示詞版本、種子與後製方式記在 `assets/generated/README.md`。
+
+本專案程式碼目前未指定授權條款，公開前請自行選擇（例如 MIT）並加入 `LICENSE` 檔。
+
+## 名稱與商標
+
+「Monopoly」是 Hasbro 的註冊商標。公開的儲存庫名稱、網址與頁面標題建議不要使用 Monopoly 字樣，例如改用 `taiwan-tycoon`。遊戲內標題為「台灣大富翁」，英文介面為「Taiwan Tycoon」。
+
+## 專案結構
+
+```
+index.html          入口與 import map
+css/                樣式
+js/engine/          規則引擎（純函式，可在 Node 測試）
+js/net/             PeerJS 連線、主機選舉、通訊協定驗證
+js/ui/              畫面：大廳、棋盤（3D / 2D）、行情、交易、結算
+js/i18n/            中文與英文字串
+assets/placeholders/ 佔位圖（SVG）
+assets/generated/   ComfyUI 生成圖放置處
+tests/              node --test 測試
+dev-log/            設計規劃、spike 報告
+PROMPTS.md          ComfyUI 提示詞
+HANDOFF.md          另一台電腦接手：生圖與上架的提示詞
+GAPS.md             未完成與已知問題清單
+```
