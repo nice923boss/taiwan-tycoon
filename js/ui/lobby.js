@@ -36,8 +36,10 @@ export function createLobby({ session }) {
     const { room, you } = session.state;
     if (!room) return;
     const seat = room.seats.find((s) => s.char === char);
+    const seated = room.seats.some((s) => s.id === you);
     if (!seat) session.send({ t: 'sit', char });
     else if (seat.id === you) session.send({ t: 'stand' });
+    else if (seat.cpu && !seated) session.send({ t: 'sit', char });
     else if (seat.cpu && room.leader === you) session.send({ t: 'removeCpu', char });
   }
 
@@ -54,6 +56,17 @@ export function createLobby({ session }) {
     let n = 1;
     while (names.has(t('ui.cpuName', { n }))) n += 1;
     session.send({ t: 'addCpu', char, name: t('ui.cpuName', { n }) });
+  });
+
+  // Removes the computer player added last.
+  const removeCpuBtn = $('#btn-remove-cpu');
+  removeCpuBtn.addEventListener('click', () => {
+    if (removeCpuBtn.getAttribute('aria-disabled') === 'true') {
+      toast(removeCpuBtn.dataset.tip, 'warn');
+      return;
+    }
+    const cpu = session.state.room.seats.findLast((s) => s.cpu);
+    session.send({ t: 'removeCpu', char: cpu.char });
   });
 
   const nameInput = $('#name-input');
@@ -120,8 +133,9 @@ export function createLobby({ session }) {
       card.root.classList.toggle('taken', Boolean(seat) && seat.id !== you);
       card.root.classList.toggle('mine', seat?.id === you);
       card.root.classList.toggle('offline', Boolean(seat) && !seat.online && !seat.cpu);
-      card.root.classList.toggle('removable', Boolean(seat?.cpu) && isLeader);
+      card.root.classList.toggle('removable', Boolean(seat?.cpu) && (isLeader || !mySeat));
       const label = !seat ? t('ui.sitAs', { char: t(`char.${char}`) }) : seat.id === you ? t('ui.standUp')
+        : seat.cpu && !mySeat ? t('ui.replaceCpu', { name: seat.name })
         : seat.cpu && isLeader ? t('ui.removeCpu', { name: seat.name }) : t('ui.seatTaken', { name: seat.name });
       card.face.setAttribute('aria-label', label);
       card.face.dataset.tip = label;
@@ -130,7 +144,7 @@ export function createLobby({ session }) {
     const full = room.seats.length >= RULES.maxPlayers;
     $('#lobby-note').textContent = mySeat ? t('ui.waitStart') : full ? t('ui.seatsFull') : t('ui.pickChar');
 
-    fill(roundsSelect, ...RULES.roundOptions.map((n) => h('option', { value: n, selected: n === room.rounds }, t('ui.roundsN', { n }))));
+    fill(roundsSelect, ...RULES.roundOptions.map((n) => h('option', { value: n, selected: n === room.rounds }, n ? t('ui.roundsN', { n }) : t('ui.roundsNoLimit'))));
     roundsSelect.disabled = !isLeader;
 
     const leaderName = room.leader ? nameOf(room, room.leader) : '?';
@@ -140,6 +154,10 @@ export function createLobby({ session }) {
     addCpuBtn.setAttribute('aria-disabled', String(Boolean(cpuReason)));
     if (cpuReason) addCpuBtn.dataset.tip = cpuReason;
     else delete addCpuBtn.dataset.tip;
+    const lessReason = !isLeader ? t('ui.onlyLeader', { name: leaderName }) : !room.seats.some((s) => s.cpu) ? t('ui.noCpu') : null;
+    removeCpuBtn.setAttribute('aria-disabled', String(Boolean(lessReason)));
+    if (lessReason) removeCpuBtn.dataset.tip = lessReason;
+    else delete removeCpuBtn.dataset.tip;
 
     startBtn.setAttribute('aria-disabled', String(Boolean(reason)));
     if (reason) startBtn.dataset.tip = reason;

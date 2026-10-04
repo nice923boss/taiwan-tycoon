@@ -12,8 +12,10 @@ export const RULES = {
   goSalary: 200,
   jailFine: 50,
   maxJailTurns: 3,
-  roundOptions: [15, 25, 40],
+  roundOptions: [15, 25, 40, 0], // 0: no round limit, play until one player is left
   defaultRounds: 25,
+  // In every game, rent rises by perRound percent each round after round `after`.
+  rentRise: { after: 20, perRound: 20 },
   minBid: 10,
   bidStep: 10,
   mortgageTransferFee: 0.1,
@@ -39,8 +41,15 @@ export function countOwnedOfType(g, p, type) {
   return SQUARES.filter((s) => s.type === type && g.props[s.id].owner === p).length;
 }
 
+// Rent in percent of the listed rent during `round`.
+export const rentPercent = (round) => 100 + RULES.rentRise.perRound * Math.max(0, round - RULES.rentRise.after);
+
 // Rent owed when landing on `id`. `opts.stationMult` / `opts.utilityMult` come from cards.
 export function rentFor(g, id, diceSum, opts = {}) {
+  return Math.round((listedRent(g, id, diceSum, opts) * rentPercent(g.round)) / 100);
+}
+
+function listedRent(g, id, diceSum, opts) {
   const sq = SQUARES[id];
   const st = g.props[id];
   if (st.owner === null || st.mortgaged) return 0;

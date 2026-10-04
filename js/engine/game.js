@@ -74,7 +74,8 @@ export function createGame({ players, seed, now, maxRounds = RULES.defaultRounds
     chance: shuffled(g, DECKS.chance.map((c) => c.id)),
     fate: shuffled(g, DECKS.fate.map((c) => c.id)),
   };
-  log(g, 'log.start', { rounds: maxRounds });
+  if (maxRounds) log(g, 'log.start', { rounds: maxRounds });
+  else log(g, 'log.startNoLimit', {});
   setPhase(g, 'preRoll', now);
   emit(g, { kind: 'turn', p: 0 });
   return g;

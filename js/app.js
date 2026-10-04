@@ -187,7 +187,9 @@ export async function startApp() {
     const banner = $('#spectate-banner');
     const me = meIn(state);
     banner.hidden = !game || (me >= 0 && !game.players[me].bankrupt);
-    const open = me < 0 && game?.phase !== 'gameOver' ? room.seats.filter((seat) => seat.vacant) : [];
+    const open = me < 0 && game?.phase !== 'gameOver'
+      ? room.seats.filter((seat) => (seat.vacant || seat.cpu) && !game.players.find((pl) => pl.id === seat.id)?.bankrupt)
+      : [];
     // Rebuilt only when it changes, so a click is not lost to a re-render.
     const key = JSON.stringify([getLang(), me, open.map((seat) => [seat.char, seat.name])]);
     if (key === bannerKey) return;
@@ -272,7 +274,7 @@ export async function startApp() {
       market.render(state);
       spectateBanner(state);
       const g = state.game;
-      const fast = g.phase !== 'gameOver' && g.round > g.maxRounds - TEMPO_ROUNDS;
+      const fast = g.phase !== 'gameOver' && g.maxRounds > 0 && g.round > g.maxRounds - TEMPO_ROUNDS;
       if (fast !== fastTempo) setTempo((fastTempo = fast));
     } else {
       lobby.render(state);

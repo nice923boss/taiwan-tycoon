@@ -577,8 +577,8 @@ test('computer players: the leader adds and removes them, in the lobby only', as
   assert.match(cpu.id, /^[0-9a-f]{16}$/);
   assert.deepEqual(cpu, { id: cpu.id, name: 'CPU 1', char: CHARACTERS[1], online: false, bot: false, vacant: false, cpu: true });
   assert.equal(a.room().leader, a.id, 'a computer never leads');
-  await send(b, { t: 'sit', char: CHARACTERS[1] });
-  assert.equal(b.errs().at(-1), 'err.charTaken');
+  await send(a, { t: 'sit', char: CHARACTERS[1] });
+  assert.equal(a.errs().at(-1), 'err.charTaken', 'a seated person does not take a computer seat');
   await send(a, { t: 'removeCpu', char: CHARACTERS[0] });
   assert.equal(a.errs().at(-1), 'err.notNow', 'a person is not removed');
   await send(a, { t: 'removeCpu', char: CHARACTERS[1] });
@@ -595,7 +595,24 @@ test('computer players: the leader adds and removes them, in the lobby only', as
   assert.deepEqual([a, b].flatMap((x) => x.bad), []);
 });
 
-test('a computer player is never released or taken over, and plays its turns one step apart', async () => {
+test('a newcomer in the lobby takes a computer seat in its place', async () => {
+  const { host, clients } = await seated(1);
+  const [a] = clients;
+  await send(a, { t: 'addCpu', char: CHARACTERS[1], name: 'CPU 1' });
+  await send(a, { t: 'addCpu', char: CHARACTERS[2], name: 'CPU 2' });
+  const b = await connect(host, 1);
+  await send(b, { t: 'sit', char: CHARACTERS[1] });
+  assert.deepEqual(a.room().seats.map((s) => [s.name, s.char, s.cpu]), [
+    ['P0', CHARACTERS[0], false], ['P1', CHARACTERS[1], false], ['CPU 2', CHARACTERS[2], true],
+  ]);
+  assert.deepEqual(seatOf(a, b.id), { id: b.id, name: 'P1', char: CHARACTERS[1], online: true, bot: false, vacant: false, cpu: false });
+  assert.deepEqual(a.room().spectators, []);
+  await send(a, { t: 'removeCpu', char: CHARACTERS[1] });
+  assert.equal(a.errs().at(-1), 'err.notNow', 'the seat is a person now');
+  assert.deepEqual([a, b].flatMap((x) => x.bad), []);
+});
+
+test('a computer player is never released, plays its turns one step apart, and a spectator may take it over', async () => {
   const { host, clock, clients } = await seated(1);
   const ctx = { host, clock };
   const [a] = clients;
@@ -621,9 +638,18 @@ test('a computer player is never released or taken over, and plays its turns one
   assert.notEqual(JSON.stringify(host.snapshot().game), before, 'the computer moved within two steps');
   assert.equal(logOf(ctx).some((l) => l.key === 'log.timeout' && l.params.p === p), false);
   assert.deepEqual({ bot: seatOf(a, cpu).bot, vacant: seatOf(a, cpu).vacant }, { bot: false, vacant: false });
-  await send(watcher, { t: 'claim', char: CHARACTERS[1] });
-  assert.equal(watcher.errs().at(-1), 'err.seatNotVacant');
   assert.equal(logOf(ctx).some((l) => l.key === 'log.botOn'), false);
+
+  // The spectator plays on from where the computer stopped; the computer moves no more.
+  await send(watcher, { t: 'claim', char: CHARACTERS[1] });
+  assert.equal(host.snapshot().game.players[p].id, watcher.id);
+  assert.deepEqual(seatOf(a, watcher.id), { id: watcher.id, name: 'P9', char: CHARACTERS[1], online: true, bot: false, vacant: false, cpu: false });
+  assert.equal(seatOf(a, cpu), undefined);
+  assert.deepEqual(logOf(ctx).at(-1), { ...logOf(ctx).at(-1), key: 'log.seatClaimed', params: { p, name: 'CPU 1' } });
+  const claimed = JSON.stringify(host.snapshot().game);
+  await at(ctx, clock.now + HOST_TIMING.botStepMs * 2, [a, watcher]);
+  assert.equal(JSON.stringify(host.snapshot().game), claimed, 'the computer no longer plays the seat');
+  assert.deepEqual([a, watcher].flatMap((x) => x.bad), []);
 });
 
 // A room run by client 0's tab: its own loopback connection is a member like the others.

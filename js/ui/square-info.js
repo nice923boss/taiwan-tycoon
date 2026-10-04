@@ -1,8 +1,9 @@
 // Square details shown when a board square is clicked: owner, price, the rent
-// table with the level that applies now highlighted, and building costs.
+// table (at this round's rent level) with the level that applies now
+// highlighted, and building costs.
 
 import { GROUPS, SQUARES, STATION_RENT, UTILITY_MULT, mortgageValue } from '../engine/board.js';
-import { RULES, ownsWholeGroup } from '../engine/rules.js';
+import { RULES, ownsWholeGroup, rentPercent } from '../engine/rules.js';
 import { money, t } from '../i18n/i18n.js';
 import { fill, h } from './dom.js';
 import { squareColor } from './manage.js';
@@ -21,25 +22,29 @@ export function createSquareInfo() {
   function table(sq, st) {
     const owner = st?.owner ?? null;
     const live = owner !== null && !st.mortgaged;
+    const pct = rentPercent(game.round);
+    const rent = (n) => money(Math.round((n * pct) / 100));
+    const rise = pct > 100 ? [row(t('ui.rentRate'), `×${pct / 100}`, true)] : [];
     if (sq.type === 'property') {
       const full = live && ownsWholeGroup(game, owner, sq.group);
       return [
-        row(t('ui.rentBase'), money(sq.rent[0]), live && !st.houses && !full),
-        row(t('ui.rentGroup'), money(sq.rent[0] * 2), live && !st.houses && full),
-        ...[1, 2, 3, 4].map((k) => row(t('ui.housesN', { n: k }), money(sq.rent[k]), live && st.houses === k)),
-        row(t('ui.hotel'), money(sq.rent[5]), live && st.houses === 5),
+        ...rise,
+        row(t('ui.rentBase'), rent(sq.rent[0]), live && !st.houses && !full),
+        row(t('ui.rentGroup'), rent(sq.rent[0] * 2), live && !st.houses && full),
+        ...[1, 2, 3, 4].map((k) => row(t('ui.housesN', { n: k }), rent(sq.rent[k]), live && st.houses === k)),
+        row(t('ui.hotel'), rent(sq.rent[5]), live && st.houses === 5),
         row(t('ui.houseCost'), money(GROUPS[sq.group].houseCost)),
         row(t('ui.mortgageValue'), money(mortgageValue(sq.id))),
       ];
     }
     if (sq.type === 'station') {
       const n = live ? countOwned(game, owner, 'station') : 0;
-      return [...STATION_RENT.map((r, k) => row(t('ui.stationsOwned', { n: k + 1 }), money(r), n === k + 1)),
+      return [...rise, ...STATION_RENT.map((r, k) => row(t('ui.stationsOwned', { n: k + 1 }), rent(r), n === k + 1)),
         row(t('ui.mortgageValue'), money(mortgageValue(sq.id)))];
     }
     if (sq.type === 'utility') {
       const n = live ? countOwned(game, owner, 'utility') : 0;
-      return [...UTILITY_MULT.map((m, k) => row(t('ui.utilitiesOwned', { n: k + 1 }), t('ui.diceTimes', { n: m }), n === k + 1)),
+      return [...rise, ...UTILITY_MULT.map((m, k) => row(t('ui.utilitiesOwned', { n: k + 1 }), t('ui.diceTimes', { n: m }), n === k + 1)),
         row(t('ui.mortgageValue'), money(mortgageValue(sq.id)))];
     }
     return [];

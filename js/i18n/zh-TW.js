@@ -78,6 +78,8 @@ export default {
 
   // ---- game log ----
   'log.start': '遊戲開始！共 {rounds} 回合',
+  'log.startNoLimit': '遊戲開始！玩到只剩一位玩家為止',
+  'log.rentRise': '第 {round} 回合起，租金為原價的 {x} 倍',
   'log.debtOpen': '{p} 需支付 {amt}，現金不足，請變賣資產或宣告破產',
   'log.debtPaid': '{p} 付清 {amt}',
   'log.bailForced': '{p} 第三次沒擲出對子，繳納保釋金 {amt} 出獄',
@@ -184,7 +186,7 @@ export default {
   // static markup and top bar
   'ui.lobbyTagline': '台灣城市主題大富翁，最多 6 位玩家；座位坐滿後加入的人自動觀戰。',
   'ui.yourName': '你的名稱', 'ui.save': '儲存', 'ui.nameSaved': '名稱已儲存',
-  'ui.roomSettings': '房間設定', 'ui.rounds': '回合數', 'ui.roundsN': '{n} 回合', 'ui.start': '開始遊戲',
+  'ui.roomSettings': '房間設定', 'ui.rounds': '回合數', 'ui.roundsN': '{n} 回合', 'ui.roundsNoLimit': '破產為止', 'ui.start': '開始遊戲',
   'ui.invite': '邀請朋友', 'ui.copyLink': '複製邀請連結', 'ui.copied': '連結已複製',
   'ui.spectators': '觀戰者', 'ui.resetView': '重設視角',
   'ui.tabMarket': '行情', 'ui.tabLog': '紀錄', 'ui.tabChat': '聊天',
@@ -216,9 +218,10 @@ export default {
   'ui.readyToStart': '{n} 位玩家已入座，可以開始',
   'ui.youMark': '{name}（你）', 'ui.none': '無',
   'ui.addCpu': '加入電腦玩家', 'ui.cpuName': '電腦 {n}', 'ui.removeCpu': '移除 {name}', 'ui.noFreeSeat': '座位已滿',
+  'ui.lessCpu': '減少電腦玩家', 'ui.noCpu': '目前沒有電腦玩家', 'ui.replaceCpu': '取代 {name} 加入遊戲',
 
   // players panel
-  'ui.roundOf': '第 {n} / {max} 回合', 'ui.roundN': '第 {n} 回合',
+  'ui.roundOf': '第 {n} / {max} 回合', 'ui.roundN': '第 {n} 回合', 'ui.rentX': '租金 ×{x}', 'ui.rentRate': '目前租金倍率',
   'ui.you': '你', 'ui.bankrupt': '已破產', 'ui.inJail': '坐牢中',
   'ui.worth': '總資產 {amt}', 'ui.properties': '地產', 'ui.stocks': '股票',
   'ui.holding': '{sym} {n} 股', 'ui.jailCardsN': '出獄許可證 × {n}',

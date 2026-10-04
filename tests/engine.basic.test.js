@@ -7,7 +7,7 @@ import {
 } from '../js/engine/game.js';
 import { OWNABLE_IDS, STATION_RENT } from '../js/engine/board.js';
 import { DECKS } from '../js/engine/cards.js';
-import { RULES, netWorth, rentFor } from '../js/engine/rules.js';
+import { RULES, netWorth, rentFor, rentPercent } from '../js/engine/rules.js';
 import { STOCKS, dividendFor } from '../js/engine/stocks.js';
 import { JAIL_CARD_ID } from '../js/engine/turn.js';
 import {
@@ -241,6 +241,34 @@ test('rent: utilities pay 4x or 10x the dice', () => {
   assert.equal(g.players[1].cash, 1500 + 10 * 5);
   assert.equal(rentFor(own(newGame(2), 1, [12]), 12, 7, { utilityMult: 10 }), 70);
   assert.equal(rentFor(newGame(2), 12, 7), 0);
+});
+
+test('rent rises 20% per round after round 20, in every game', () => {
+  assert.deepEqual([1, 20, 21, 25, 30].map(rentPercent), [100, 100, 120, 200, 300]);
+  const at = (round, g) => edit(g, (c) => {
+    c.round = round;
+  });
+  let g = landOn(at(25, own(newGame(2, { maxRounds: 40 }), 1, [3])), 3);
+  assert.equal(g.players[1].cash, 1500 + 8);
+  assert.deepEqual(lastLog(g, 'log.payRent').params, { p: 0, q: 1, sq: 3, amt: 8 });
+  g = landOn(at(21, own(newGame(2, { maxRounds: 40 }), 1, [5])), 5);
+  assert.equal(g.players[1].cash, 1500 + Math.round((STATION_RENT[0] * 120) / 100));
+  g = landOn(at(25, own(newGame(2, { maxRounds: 40 }), 1, [12])), 12, 2, 3);
+  assert.equal(g.players[1].cash, 1500 + 2 * 4 * 5);
+});
+
+test('round close logs the rent rise once past round 20', () => {
+  const close = (round) => {
+    let g = edit(newGame(2, { maxRounds: 40 }), (c) => {
+      c.round = round;
+    });
+    for (let p = 0; p < 2; p += 1) g = act(landOn(g, 0), { type: 'END_TURN', p });
+    return g;
+  };
+  assert.equal(lastLog(close(19), 'log.rentRise'), undefined);
+  const g = close(20);
+  assert.equal(g.round, 21);
+  assert.deepEqual(lastLog(g, 'log.rentRise').params, { round: 21, x: 1.2 });
 });
 
 test('tax squares pay the bank', () => {
@@ -505,6 +533,18 @@ test('game ends after maxRounds with ranking and winner', () => {
   assert.deepEqual(lastLog(g, 'log.gameOver').params, { p: 1, amt: g.ranking[0].worth });
   assert.deepEqual(actorOf(g), []);
   for (const type of ACTION_TYPES) assert.equal(actErr(g, { type, p: 1 }).key, 'err.gameOver');
+});
+
+test('maxRounds 0 has no round limit', () => {
+  let g = newGame(2, { maxRounds: 0 });
+  assert.deepEqual(g.log[0], { n: 1, key: 'log.startNoLimit', params: {} });
+  g = edit(g, (c) => {
+    c.round = 99;
+  });
+  for (let p = 0; p < 2; p += 1) g = act(landOn(g, 0), { type: 'END_TURN', p });
+  assert.equal(g.round, 100);
+  assert.equal(g.phase, 'preRoll');
+  assert.deepEqual(lastLog(g, 'log.rentRise').params, { round: 100, x: 17 });
 });
 
 test('dividends are paid at round close', () => {

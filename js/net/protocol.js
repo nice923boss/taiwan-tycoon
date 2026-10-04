@@ -12,7 +12,7 @@ import { ACTION_TYPES, HOST_ONLY, STATE_VERSION } from '../engine/game.js';
 import { RULES } from '../engine/rules.js';
 import { STOCKS } from '../engine/stocks.js';
 
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 export const CHARACTERS = ['bear', 'leopardcat', 'magpie', 'pangolin', 'macaque', 'deer'];
 export const NAME_MAX = 16;
 export const CHAT_MAX = 200;

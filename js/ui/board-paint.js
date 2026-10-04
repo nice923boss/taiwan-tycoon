@@ -45,7 +45,7 @@ export function squareCenter(i, S) {
   return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
 }
 
-// view (optional): { props: game.props, colors: player colors, buildings: true to draw houses (2D view) }
+// view (optional): { props: game.props, colors: player colors, buildings: true to draw houses and flags (2D view) }
 export function paintBoard(ctx, S, view = {}) {
   ctx.save();
   ctx.fillStyle = PAPER;
@@ -162,6 +162,7 @@ function paintEdge(ctx, S, i, w, h, view) {
   if (st && st.owner !== null && st.owner !== undefined) {
     ctx.fillStyle = view.colors?.[st.owner] ?? INK;
     ctx.fillRect(-w / 2, h / 2 - priceH * 0.28, w, priceH * 0.28);
+    if (view.buildings) paintFlag(ctx, w * 0.27, h / 2 - priceH * 0.28, w, ctx.fillStyle);
   }
   if (st?.mortgaged) {
     ctx.fillStyle = 'rgba(40,30,20,0.45)';
@@ -175,18 +176,65 @@ function priceLabel(sq) {
   return '';
 }
 
+// Houses are small pentagons (walls plus a gable); a hotel is a stepped tower.
 function paintBuildings(ctx, x, y, w, h, houses) {
   if (houses === 0) return;
   ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  ctx.lineWidth = w * 0.015;
   if (houses === 5) {
+    const cx = x + w / 2;
     ctx.fillStyle = '#d93a32';
-    ctx.fillRect(x + w * 0.3, y + h * 0.18, w * 0.4, h * 0.64);
+    ctx.beginPath();
+    ctx.moveTo(cx - w * 0.3, y + h * 0.9);
+    ctx.lineTo(cx - w * 0.3, y + h * 0.62);
+    ctx.lineTo(cx - w * 0.14, y + h * 0.62);
+    ctx.lineTo(cx - w * 0.14, y + h * 0.22);
+    ctx.lineTo(cx, y + h * 0.06);
+    ctx.lineTo(cx + w * 0.14, y + h * 0.22);
+    ctx.lineTo(cx + w * 0.14, y + h * 0.62);
+    ctx.lineTo(cx + w * 0.3, y + h * 0.62);
+    ctx.lineTo(cx + w * 0.3, y + h * 0.9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   } else {
     ctx.fillStyle = '#2f9e57';
     const s = w * 0.17;
     const gap = (w - houses * s) / (houses + 1);
-    for (let k = 0; k < houses; k += 1) ctx.fillRect(x + gap + k * (s + gap), y + (h - s) / 2, s, s);
+    for (let k = 0; k < houses; k += 1) {
+      const hx = x + gap + k * (s + gap);
+      const hy = y + (h - s * 1.3) / 2;
+      ctx.beginPath();
+      ctx.moveTo(hx, hy + s * 1.3);
+      ctx.lineTo(hx, hy + s * 0.5);
+      ctx.lineTo(hx + s / 2, hy);
+      ctx.lineTo(hx + s, hy + s * 0.5);
+      ctx.lineTo(hx + s, hy + s * 1.3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
   }
+  ctx.restore();
+}
+
+// Small flag in the owner's color standing on the owner strip at (x, base).
+function paintFlag(ctx, x, base, w, color) {
+  const pole = w * 0.36;
+  ctx.save();
+  ctx.fillStyle = INK;
+  ctx.fillRect(x - w * 0.012, base - pole, w * 0.024, pole);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = w * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(x, base - pole);
+  ctx.lineTo(x + w * 0.2, base - pole + w * 0.07);
+  ctx.lineTo(x, base - pole + w * 0.14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
 }
 

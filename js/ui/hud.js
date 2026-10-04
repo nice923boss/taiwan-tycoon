@@ -2,7 +2,7 @@
 
 import { assetSrc } from '../../assets/manifest.js';
 import { GROUPS, SQUARES } from '../engine/board.js';
-import { RULES, netWorth } from '../engine/rules.js';
+import { RULES, netWorth, rentPercent } from '../engine/rules.js';
 import { STOCKS } from '../engine/stocks.js';
 import { money, t } from '../i18n/i18n.js';
 import { $, fill, h, remainingMs } from './dom.js';
@@ -16,7 +16,12 @@ export function createHud() {
     const { game, room, isHost, status } = state;
     const round = $('#round-chip');
     round.hidden = !game;
-    if (game) round.textContent = t('ui.roundOf', { n: Math.min(game.round, game.maxRounds), max: game.maxRounds });
+    if (game) {
+      const n = game.maxRounds ? Math.min(game.round, game.maxRounds) : game.round;
+      const pct = rentPercent(n);
+      fill(round, h('span', {}, game.maxRounds ? t('ui.roundOf', { n, max: game.maxRounds }) : t('ui.roundN', { n })),
+        pct > 100 ? h('span', { class: 'rent-x' }, t('ui.rentX', { x: pct / 100 })) : null);
+    }
     const host = $('#host-chip');
     const nameOf = (id) => room?.seats.find((s) => s.id === id)?.name ?? room?.spectators.find((s) => s.id === id)?.name ?? '?';
     host.hidden = !room;

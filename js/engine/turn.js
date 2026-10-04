@@ -9,7 +9,7 @@
 import { BOARD_SIZE, GROUPS, JAIL_POS, SQUARES, mortgageValue } from './board.js';
 import { CARD_BY_ID } from './cards.js';
 import { nextInt } from './rng.js';
-import { RULES, alivePlayers, buildingsOf, mortgageError, netWorth, rentFor, sellBuildingError } from './rules.js';
+import { RULES, alivePlayers, buildingsOf, mortgageError, netWorth, rentFor, rentPercent, sellBuildingError } from './rules.js';
 import { STOCKS, closeMarket, dividendFor, sellProceeds, shockStock } from './stocks.js';
 import { emit, log, setPhase } from './state.js';
 
@@ -385,7 +385,8 @@ function endRound(g, now) {
   }
   g.worthLog = [...g.worthLog, { r: g.round, w: g.players.map((pl, i) => (pl.bankrupt ? 0 : netWorth(g, i))) }];
   g.round += 1;
-  if (g.round > g.maxRounds) endGame(g, now);
+  if (g.maxRounds && g.round > g.maxRounds) endGame(g, now);
+  else if (g.round > RULES.rentRise.after) log(g, 'log.rentRise', { round: g.round, x: rentPercent(g.round) / 100 });
 }
 
 export function endGame(g, now) {

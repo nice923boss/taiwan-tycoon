@@ -232,9 +232,12 @@ export function createHostRoom({ selfId, snap = null, gen = 0, onDrop = () => {}
   const COMMANDS = {
     // One character per seat and as many characters as seats, so a free
     // character always means a free seat.
+    // A newcomer may also take a computer player's seat.
     sit: lobbyOnly((m, msg) => {
-      if (room.seats.some((seat) => seat.char === msg.char && seat.id !== m.id)) return { key: 'err.charTaken' };
-      if (isSeated(m.id)) setSeat(m.id, { char: msg.char });
+      const held = room.seats.find((seat) => seat.char === msg.char && seat.id !== m.id);
+      if (held?.cpu && !isSeated(m.id)) setSeat(held.id, { id: m.id, name: m.name, online: true, cpu: false });
+      else if (held) return { key: 'err.charTaken' };
+      else if (isSeated(m.id)) setSeat(m.id, { char: msg.char });
       else room = { ...room, seats: [...room.seats, { id: m.id, name: m.name, char: msg.char, online: true, bot: false, vacant: false }] };
       changed();
       return null;
@@ -288,16 +291,17 @@ export function createHostRoom({ selfId, snap = null, gen = 0, onDrop = () => {}
       broadcast({ t: 'chat', lines: [line], reset: false });
       return null;
     },
-    // A spectator takes over the seat of a player who has been away for seatReleaseMs.
+    // A spectator takes over a computer player's seat, or the seat of a player
+    // who has been away for seatReleaseMs.
     claim: (m, msg) => {
       if (room.stage !== 'game' || isSeated(m.id)) return { key: 'err.notNow' };
       const seat = room.seats.find((s) => s.char === msg.char);
       const p = seat ? indexOf(seat.id) : -1;
-      if (!seat?.vacant || game.phase === 'gameOver' || game.players[p].bankrupt) return { key: 'err.seatNotVacant' };
+      if (!(seat?.vacant || seat?.cpu) || game.phase === 'gameOver' || game.players[p].bankrupt) return { key: 'err.seatNotVacant' };
       game = structuredClone(game);
       game.players[p] = { ...game.players[p], id: m.id, name: m.name };
       log(game, 'log.seatClaimed', { p, name: seat.name });
-      setSeat(seat.id, { id: m.id, name: m.name, online: true, bot: false, vacant: false });
+      setSeat(seat.id, { id: m.id, name: m.name, online: true, bot: false, vacant: false, cpu: false });
       offlineAt.delete(seat.id);
       members.delete(seat.id);
       changed();

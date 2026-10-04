@@ -79,6 +79,8 @@ export default {
 
   // ---- game log ----
   'log.start': 'Game started! {rounds} rounds',
+  'log.startNoLimit': 'Game started! Play until one player is left',
+  'log.rentRise': 'From round {round}, rent is {x} times the listed rent',
   'log.debtOpen': '{p} owes {amt} but lacks the cash: sell assets or declare bankruptcy',
   'log.debtPaid': '{p} paid {amt}',
   'log.bailForced': '{p} missed doubles a third time, paid {amt} bail and left jail',
@@ -185,7 +187,7 @@ export default {
   // static markup and top bar
   'ui.lobbyTagline': 'A property-trading board game set across Taiwan, for up to 6 players. Once every seat is taken, newcomers watch as spectators.',
   'ui.yourName': 'Your name', 'ui.save': 'Save', 'ui.nameSaved': 'Name saved',
-  'ui.roomSettings': 'Room settings', 'ui.rounds': 'Rounds', 'ui.roundsN': '{n} rounds', 'ui.start': 'Start game',
+  'ui.roomSettings': 'Room settings', 'ui.rounds': 'Rounds', 'ui.roundsN': '{n} rounds', 'ui.roundsNoLimit': 'Until bankruptcy', 'ui.start': 'Start game',
   'ui.invite': 'Invite friends', 'ui.copyLink': 'Copy invite link', 'ui.copied': 'Link copied',
   'ui.spectators': 'Spectators', 'ui.resetView': 'Reset view',
   'ui.tabMarket': 'Market', 'ui.tabLog': 'Log', 'ui.tabChat': 'Chat',
@@ -217,9 +219,10 @@ export default {
   'ui.readyToStart': '{n} players seated; ready to start',
   'ui.youMark': '{name} (you)', 'ui.none': 'None',
   'ui.addCpu': 'Add computer player', 'ui.cpuName': 'CPU {n}', 'ui.removeCpu': 'Remove {name}', 'ui.noFreeSeat': 'All seats are taken',
+  'ui.lessCpu': 'Remove computer player', 'ui.noCpu': 'There are no computer players', 'ui.replaceCpu': 'Replace {name} and join',
 
   // players panel
-  'ui.roundOf': 'Round {n} / {max}', 'ui.roundN': 'Round {n}',
+  'ui.roundOf': 'Round {n} / {max}', 'ui.roundN': 'Round {n}', 'ui.rentX': 'Rent ×{x}', 'ui.rentRate': 'Rent multiplier now',
   'ui.you': 'You', 'ui.bankrupt': 'Bankrupt', 'ui.inJail': 'In jail',
   'ui.worth': 'Net worth {amt}', 'ui.properties': 'Properties', 'ui.stocks': 'Stocks',
   'ui.holding': '{sym}: {n} shares', 'ui.jailCardsN': 'Get-out-of-jail cards × {n}',

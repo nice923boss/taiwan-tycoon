@@ -125,6 +125,8 @@ input[type="checkbox"] { min-height: auto; width: 18px; height: 18px; accent-col
 .brand-logo { width: 30px; height: 30px; }
 .top-info { flex: 1; display: flex; gap: 6px; overflow: hidden; }
 .top-actions { display: flex; gap: 6px; }
+#round-chip .rent-x { color: #ffb0aa; }
+#round-chip .rent-x::before { content: '· '; color: var(--muted); }
 
 /* ---------- lobby ---------- */
 
@@ -158,7 +160,7 @@ input[type="checkbox"] { min-height: auto; width: 18px; height: 18px; accent-col
 .char-card.mine .char-face { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242, 182, 50, 0.35); }
 .char-card.offline .char-owner::after { content: " · offline"; color: var(--red); }
 .char-card.taken.removable .char-face { cursor: pointer; }
-#btn-add-cpu { margin-bottom: 8px; }
+.cpu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .char-dot { position: absolute; top: 10px; left: 10px; width: 14px; height: 14px; border-radius: 50%; }
 
 /* ---------- connection banner, toasts, tooltip ---------- */
@@ -231,4 +233,16 @@ input[type="checkbox"] { min-height: auto; width: 18px; height: 18px; accent-col
   .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .char-card { height: 210px; }
   .brand span { display: none; }
+}
+
+/* Phones: drop the logo and the host chip, and the round and the rent
+   multiplier stack in two small lines, so the round chip fits beside the
+   action buttons. */
+@media (max-width: 480px) {
+  .brand, #host-chip { display: none; }
+  #round-chip:has(.rent-x) {
+    flex-direction: column; align-items: flex-start; gap: 0;
+    font-size: 0.72rem; line-height: 1.2; border-radius: 10px;
+  }
+  #round-chip .rent-x::before { content: none; }
 }

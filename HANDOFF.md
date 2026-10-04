@@ -26,7 +26,7 @@
 | ComfyUI | 生圖 | 必要 |
 | Git | 用指令上傳到 GitHub | 走網頁上傳時不需要 |
 | GitHub CLI（`gh`） | 用指令建立儲存庫、開啟 Pages | 選用 |
-| Node.js 22 以上 | `npm test` 跑 124 項測試 | 選用（只換圖、不改程式時可略過） |
+| Node.js 22 以上 | `npm test` 跑 153 項測試 | 選用（只換圖、不改程式時可略過） |
 
 4. 確認檔案完整：在 `taiwan-tycoon` 資料夾執行下列指令，瀏覽器開 `http://localhost:5173/`，看到大廳就代表可以運作。
 
@@ -140,7 +140,7 @@ python -c "from PIL import Image; import pathlib; [print(p.name, Image.open(p).s
    b. 超過 1 MB 的圖片清單，問我要不要壓縮（格式與檔名不變）。
    c. 根目錄有 index.html 與 .nojekyll；.gitignore 含 node_modules/ 與 .claude/。
    d. 搜尋專案（排除 node_modules）確認沒有金鑰、token、密碼。
-   e. 有 Node.js 22 以上就執行 npm install 與 npm test，必須全數通過（目前 124 項）。沒有 Node 就略過並告訴我。
+   e. 有 Node.js 22 以上就執行 npm install 與 npm test，必須全數通過（目前 153 項）。沒有 Node 就略過並告訴我。
 3. 處理 GAPS.md 的 G24：英文介面的 ui.boardTitle 與 ui.lobbyTagline（js/i18n/en.js）含 Monopoly 字樣，問我英文名稱要改成什麼。改完執行 npm test。
 4. 問我授權條款（建議 MIT）與著作權人名稱，建立 LICENSE，並把 README.md「本專案程式碼目前未指定授權條款」那段改成實際的授權。
 5. git init -b main、git add -A，先給我看 git status，確認沒有 node_modules/ 與 .claude/ 再 commit。
@@ -189,5 +189,5 @@ python -c "from PIL import Image; import pathlib; [print(p.name, Image.open(p).s
 
 1. 換圖或改程式後：用 git 就執行 `git add -A`、`git commit`、`git push`；用網頁就再上傳一次覆蓋同名檔案。
 2. GitHub Pages 1 到 3 分鐘後更新。
-3. 所有玩家都要重新整理頁面（Ctrl+F5）才會載入新版。新版若提高了通訊協定版本，沒重新整理的分頁會被主機拒絕並顯示提示（目前為第 3 版，見 README「更新版本時」）。
+3. 所有玩家都要重新整理頁面（Ctrl+F5）才會載入新版。新版若提高了通訊協定版本，沒重新整理的分頁會被主機拒絕並顯示提示（目前為第 4 版，見 README「更新版本時」）。
 4. 想開另一個獨立房間，在網址後加 `?room=名稱`（小寫英數字與 `-`，最多 24 字），例如 `?room=family`。

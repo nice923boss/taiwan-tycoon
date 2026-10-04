@@ -8,6 +8,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { loadImage } from '../../assets/manifest.js';
 import { SQUARES } from '../engine/board.js';
 import { CORNER, paintBoard, squareCenter, squareRect } from './board-paint.js';
+import { buildingModel, flagModel } from './buildings3d.js';
 import { createDice } from './dice3d.js';
 
 const BOARD = 10;
@@ -96,11 +97,8 @@ export function createScene3d() {
   dice.meshes.forEach((m) => scene.add(m));
 
   const houses = new THREE.Group();
-  scene.add(houses);
-  const houseGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
-  const hotelGeo = new THREE.BoxGeometry(0.42, 0.22, 0.2);
-  const houseMat = new THREE.MeshStandardMaterial({ color: '#2fae5a', roughness: 0.6 });
-  const hotelMat = new THREE.MeshStandardMaterial({ color: '#e8453c', roughness: 0.6 });
+  const flags = new THREE.Group();
+  scene.add(houses, flags);
 
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 8, 32), new THREE.MeshStandardMaterial({ color: '#f2b632', emissive: '#7a5200' }));
   ring.rotation.x = -Math.PI / 2;
@@ -125,30 +123,25 @@ export function createScene3d() {
   }
   loadImage('board-center').then((img) => { centerImage = img; repaint(); }, () => {});
 
+  // One building per developed square on its color band, and a flag in the
+  // owner's color on the outer corner of every owned square.
   function rebuildHouses() {
     houses.clear();
+    flags.clear();
     for (const [id, st] of Object.entries(game?.props ?? {})) {
-      if (!st.houses) continue;
+      if (st.owner === null) continue;
       const i = Number(id);
       const c = toWorld(i);
       const [ix, iz] = inward(i);
-      const cx = c.x + ix * DEPTH * 0.36;
-      const cz = c.z + iz * DEPTH * 0.36;
-      if (st.houses === 5) {
-        const m = new THREE.Mesh(hotelGeo, hotelMat);
-        m.position.set(cx, 0.11, cz);
-        m.rotation.y = ix ? Math.PI / 2 : 0;
-        m.castShadow = true;
-        houses.add(m);
-        continue;
-      }
-      for (let k = 0; k < st.houses; k += 1) {
-        const along = (k - 1.5) * WIDTH * 0.22;
-        const m = new THREE.Mesh(houseGeo, houseMat);
-        m.position.set(cx + (ix ? 0 : along), 0.08, cz + (ix ? along : 0));
-        m.castShadow = true;
+      if (st.houses) {
+        const m = buildingModel(st.houses);
+        m.position.set(c.x + ix * DEPTH * 0.38, 0, c.z + iz * DEPTH * 0.38);
+        m.rotation.y = -Math.floor(i / 10) * (Math.PI / 2);
         houses.add(m);
       }
+      const f = flagModel(game.players[st.owner].color, st.mortgaged);
+      f.position.set(c.x - ix * DEPTH * 0.3 - iz * WIDTH * 0.3, 0, c.z - iz * DEPTH * 0.3 + ix * WIDTH * 0.3);
+      flags.add(f);
     }
   }
 
@@ -294,7 +287,7 @@ export function createScene3d() {
     for (const anim of [...anims]) anim(now);
     dice.update(now);
     controls.update();
-    for (const { group } of tokens.values()) {
+    for (const group of [...[...tokens.values()].map((tok) => tok.group), ...flags.children]) {
       group.rotation.y = Math.atan2(camera.position.x - group.position.x, camera.position.z - group.position.z);
     }
     const cur = game && tokens.get(game.current);
