@@ -41,7 +41,7 @@ try {
   T.session = s;
   let last = '';
   s.onUpdate((st) => {
-    const key = `${st.status}|${st.isHost}|${st.room?.epoch}|${st.room?.rev}`;
+    const key = `${st.status}|${st.isHost}|g${st.room?.gen}|${st.room?.epoch}|${st.room?.rev}|host=${st.room?.host?.slice(0, 4)}|ho=${st.room?.handover?.by?.slice(0, 4) ?? '-'}`;
     if (key !== last) log('state', key);
     last = key;
   });

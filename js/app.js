@@ -5,12 +5,12 @@ import { assetSrc, loadImage } from '../assets/manifest.js';
 import { getLang, onLangChange, setLang, t } from './i18n/i18n.js';
 import { loadGuestName, loadSecret, roomIdFor } from './net/identity.js';
 import { NAME_MAX } from './net/protocol.js';
-import { createSession } from './net/session.js';
+import { createSession, SESSION_TIMING } from './net/session.js';
 import { peerTransport } from './net/transport-peer.js';
 import { createActions } from './ui/actions.js';
 import { createBoard2d } from './ui/board2d.js';
 import {
-  $, confirmDialog, fill, h, icon, installTooltips, toast, translateStatic,
+  $, button, confirmDialog, fill, h, icon, installTooltips, openDialog, remainingMs, toast, translateStatic,
 } from './ui/dom.js';
 import { createEvents } from './ui/events.js';
 import { createFeed } from './ui/feed.js';
@@ -202,8 +202,67 @@ export async function startApp() {
     }, t('ui.takeOver', { name: seat.name }))));
   }
 
+  // ---------- host handover ----------
+
+  const nameOf = (room, id) => room.seats.find((s) => s.id === id)?.name ?? room.spectators.find((s) => s.id === id)?.name ?? '?';
+
+  // Any member but the host may ask; with no host to ask (link lost) the session takes the room by force.
+  $('#btn-takeover').addEventListener('click', async () => {
+    const n = Math.round(SESSION_TIMING.host.handoverMs / 1000);
+    const ok = await confirmDialog(t('ui.becomeHostConfirm', { n }), { okLabel: t('ui.becomeHostOk') });
+    if (!ok || session.state.isHost) return;
+    const online = session.state.status === 'online';
+    session.takeover();
+    if (online) toast(t('ui.becomeHostSent'), 'good');
+  });
+
+  // The host gets a countdown with "decline" and "hand over now". Closing the
+  // dialog does not decline: the countdown runs on and it stays closed.
+  let handover = null; // { dlg, until, by, text } while the dialog is open
+  let dismissedUntil = 0;
+
+  function closeHandover() {
+    const open = handover;
+    handover = null;
+    open?.dlg.close();
+  }
+
+  function handoverDialog(state) {
+    const req = state.isHost ? state.room?.handover : null;
+    if (handover && handover.until !== req?.until) closeHandover();
+    if (!req || handover || req.until === dismissedUntil) return;
+    const answer = (ok) => {
+      closeHandover();
+      session.answerHandover(ok);
+    };
+    const text = h('p');
+    const dlg = openDialog({
+      title: t('ui.handoverTitle'),
+      body: text,
+      actions: [
+        button(t('ui.handoverDecline'), { kind: 'btn-danger', onClick: () => answer(false) }),
+        button(t('ui.handoverNow'), { kind: 'btn-primary', onClick: () => answer(true) }),
+      ],
+      onClose: () => {
+        if (handover?.dlg !== dlg) return;
+        handover = null;
+        dismissedUntil = req.until;
+      },
+    });
+    handover = { dlg, until: req.until, by: req.by, text };
+    handoverTick(state);
+  }
+
+  function handoverTick(state) {
+    if (!handover || !state.room) return;
+    const n = Math.ceil(remainingMs(handover.until, state.offset) / 1000);
+    handover.text.textContent = t('ui.handoverAsk', { name: nameOf(state.room, handover.by), n });
+  }
+
   function render(state) {
     connection(state);
+    $('#btn-takeover').hidden = !state.room || state.isHost || state.status === 'stopped';
+    handoverDialog(state);
     if (!state.room) return;
     showScreen(state.game ? 'game' : 'lobby');
     events.render(state); // the only caller of view.update (keeps tokens pinned during moves)
@@ -281,6 +340,7 @@ export async function startApp() {
   setInterval(() => {
     hud.tick(session.state);
     actions.tick(session.state);
+    handoverTick(session.state);
   }, TICK_MS);
 
   installTooltips();

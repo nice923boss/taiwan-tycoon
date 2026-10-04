@@ -38,7 +38,23 @@ export function createLobby({ session }) {
     const seat = room.seats.find((s) => s.char === char);
     if (!seat) session.send({ t: 'sit', char });
     else if (seat.id === you) session.send({ t: 'stand' });
+    else if (seat.cpu && room.leader === you) session.send({ t: 'removeCpu', char });
   }
+
+  // A computer player takes the first free character, named CPU 1, CPU 2, ... (in the leader's language).
+  const addCpuBtn = $('#btn-add-cpu');
+  addCpuBtn.addEventListener('click', () => {
+    if (addCpuBtn.getAttribute('aria-disabled') === 'true') {
+      toast(addCpuBtn.dataset.tip, 'warn');
+      return;
+    }
+    const { room } = session.state;
+    const char = CHARACTERS.find((c) => !room.seats.some((s) => s.char === c));
+    const names = new Set(room.seats.map((s) => s.name));
+    let n = 1;
+    while (names.has(t('ui.cpuName', { n }))) n += 1;
+    session.send({ t: 'addCpu', char, name: t('ui.cpuName', { n }) });
+  });
 
   const nameInput = $('#name-input');
   nameInput.value = loadName();
@@ -103,8 +119,10 @@ export function createLobby({ session }) {
       card.owner.textContent = seat ? seat.name : t('ui.seatFree');
       card.root.classList.toggle('taken', Boolean(seat) && seat.id !== you);
       card.root.classList.toggle('mine', seat?.id === you);
-      card.root.classList.toggle('offline', Boolean(seat) && !seat.online);
-      const label = !seat ? t('ui.sitAs', { char: t(`char.${char}`) }) : seat.id === you ? t('ui.standUp') : t('ui.seatTaken', { name: seat.name });
+      card.root.classList.toggle('offline', Boolean(seat) && !seat.online && !seat.cpu);
+      card.root.classList.toggle('removable', Boolean(seat?.cpu) && isLeader);
+      const label = !seat ? t('ui.sitAs', { char: t(`char.${char}`) }) : seat.id === you ? t('ui.standUp')
+        : seat.cpu && isLeader ? t('ui.removeCpu', { name: seat.name }) : t('ui.seatTaken', { name: seat.name });
       card.face.setAttribute('aria-label', label);
       card.face.dataset.tip = label;
     }
@@ -118,6 +136,11 @@ export function createLobby({ session }) {
     const leaderName = room.leader ? nameOf(room, room.leader) : '?';
     const reason = !isLeader ? t('ui.onlyLeader', { name: leaderName })
       : room.seats.length < RULES.minPlayers ? t('err.needPlayers', { n: RULES.minPlayers }) : null;
+    const cpuReason = !isLeader ? t('ui.onlyLeader', { name: leaderName }) : full ? t('ui.noFreeSeat') : null;
+    addCpuBtn.setAttribute('aria-disabled', String(Boolean(cpuReason)));
+    if (cpuReason) addCpuBtn.dataset.tip = cpuReason;
+    else delete addCpuBtn.dataset.tip;
+
     startBtn.setAttribute('aria-disabled', String(Boolean(reason)));
     if (reason) startBtn.dataset.tip = reason;
     else delete startBtn.dataset.tip;

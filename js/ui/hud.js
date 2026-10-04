@@ -18,9 +18,10 @@ export function createHud() {
     round.hidden = !game;
     if (game) round.textContent = t('ui.roundOf', { n: Math.min(game.round, game.maxRounds), max: game.maxRounds });
     const host = $('#host-chip');
-    const hostName = room?.seats.find((s) => s.id === room.host)?.name ?? room?.spectators.find((s) => s.id === room.host)?.name;
+    const nameOf = (id) => room?.seats.find((s) => s.id === id)?.name ?? room?.spectators.find((s) => s.id === id)?.name ?? '?';
     host.hidden = !room;
-    host.textContent = isHost ? t('ui.youAreHost') : t('ui.hostIs', { name: hostName ?? '?' });
+    host.textContent = room?.handover ? t('ui.handoverPending', { name: nameOf(room.handover.by) })
+      : isHost ? t('ui.youAreHost') : t('ui.hostIs', { name: nameOf(room?.host) });
     const net = $('#net-chip');
     net.hidden = status === 'online';
     net.textContent = t('ui.reconnecting');
@@ -51,7 +52,8 @@ export function createHud() {
       if (pl.id === you) tags.push(h('span', { class: 'pl-tag' }, t('ui.you')));
       if (pl.bankrupt) tags.push(h('span', { class: 'pl-tag warn' }, t('ui.bankrupt')));
       else if (pl.inJail) tags.push(h('span', { class: 'pl-tag warn' }, t('ui.inJail')));
-      if (!online && !pl.bankrupt) tags.push(h('span', { class: 'pl-tag warn' }, t(seat?.bot ? 'ui.bot' : 'ui.offline')));
+      if (seat?.cpu) tags.push(h('span', { class: 'pl-tag' }, t('ui.cpu')));
+      else if (!online && !pl.bankrupt) tags.push(h('span', { class: 'pl-tag warn' }, t(seat?.bot ? 'ui.bot' : 'ui.offline')));
       const groups = [...new Set(SQUARES.filter((sq) => game.props[sq.id]?.owner === p && sq.group).map((sq) => sq.group))];
       const current = game.current === p && game.phase !== 'gameOver';
       const timer = current ? h('div', { class: 'timer pl-timer' }, h('i')) : null;

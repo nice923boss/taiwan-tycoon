@@ -12,7 +12,7 @@ import { ACTION_TYPES, HOST_ONLY, STATE_VERSION } from '../engine/game.js';
 import { RULES } from '../engine/rules.js';
 import { STOCKS } from '../engine/stocks.js';
 
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 export const CHARACTERS = ['bear', 'leopardcat', 'magpie', 'pangolin', 'macaque', 'deer'];
 export const NAME_MAX = 16;
 export const CHAT_MAX = 200;
@@ -126,17 +126,23 @@ export const GameSchema = z.object({
 // ---------- room ----------
 
 export const RoomSchema = z.object({
+  // gen: host generation; it picks the room id the host listens on (session.js idOf)
+  // and rises on every host handover.
+  gen: Int.min(0).default(0),
   epoch: Int.min(0),
   rev: Int.min(0),
   stage: z.enum(['lobby', 'game']),
-  // bot: the computer plays this away player; vacant: a spectator may take the seat over.
+  // bot: the computer plays this away player; vacant: a spectator may take the seat over;
+  // cpu: a computer opponent added by the leader (never online, played by cpuAction).
   seats: z.array(z.object({
-    id: Id, name: z.string().min(1).max(64), char: Char, online: z.boolean(), bot: z.boolean().default(false), vacant: z.boolean().default(false),
+    id: Id, name: z.string().min(1).max(64), char: Char, online: z.boolean(), bot: z.boolean().default(false), vacant: z.boolean().default(false), cpu: z.boolean().default(false),
   })).max(RULES.maxPlayers),
   spectators: z.array(z.object({ id: Id, name: z.string().min(1).max(64) })).max(MAX_CONNS),
   leader: Id.nullable(),
   host: Id.nullable(),
   rounds: z.union(RULES.roundOptions.map((n) => z.literal(n))),
+  // A member asked to become host: handed over at `until` (host clock) unless the host declines.
+  handover: z.object({ by: Id, until: z.number() }).nullable().default(null),
 });
 
 // Chat is not part of the state broadcast (it would resend the whole backlog on
@@ -172,6 +178,10 @@ export const ClientMsgSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('chat'), text: z.string().max(CHAT_MAX * 4).transform((s) => cleanText(s, CHAT_MAX)).pipe(z.string().min(1)) }),
   z.object({ t: z.literal('name'), name: Name }),
   z.object({ t: z.literal('claim'), char: Char }),
+  z.object({ t: z.literal('addCpu'), char: Char, name: Name }),
+  z.object({ t: z.literal('removeCpu'), char: Char }),
+  z.object({ t: z.literal('takeover') }),
+  z.object({ t: z.literal('handover'), ok: z.boolean() }),
   z.object({ t: z.literal('beat') }),
 ]);
 
@@ -184,6 +194,8 @@ export const HostMsgSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('err'), key: z.string().max(48), params: Params }),
   z.object({ t: z.literal('bye'), key: z.string().max(48) }),
   z.object({ t: z.literal('beat'), now: z.number() }),
+  // The host stops: reconnect to generation `gen`; `heir` claims it, the others dial it.
+  z.object({ t: z.literal('move'), gen: Int.min(1), heir: Id.nullable() }),
 ]);
 
 // Parse helpers return the cleaned message, or null when it does not match.

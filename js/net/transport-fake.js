@@ -3,7 +3,7 @@
 //
 //   listen(roomId) -> { ok: true, server } | { ok: false, reason: 'taken' }
 //   dial(roomId)   -> conn | null
-//   server: { onConn(fn), onLost(fn), close() }, plus crash() and lose() for tests
+//   server: { onConn(fn), onLost(fn), close() }, plus crash(), lose() and freeze() for tests
 
 import { pair } from './pair.js';
 
@@ -31,6 +31,7 @@ export function createFakeNet() {
         },
         // Clean shutdown (tab closed or reloaded): peers see their connections close.
         close() {
+          if (server.frozen) return;
           if (rooms.get(roomId) === server) rooms.delete(roomId);
           for (const conn of conns) conn.close();
         },
@@ -46,7 +47,15 @@ export function createFakeNet() {
           server.close();
           for (const fn of lostListeners) fn();
         },
+        // The host tab hangs (busy loop, suspended): nothing gets through either
+        // way, dials fail, and the room id stays taken for good (PeerJS: until
+        // the signalling server lets go of it, about 100 s).
+        freeze() {
+          server.dead = true;
+          server.frozen = true;
+        },
         dead: false,
+        frozen: false,
       };
       rooms.set(roomId, server);
       return { ok: true, server };
@@ -55,7 +64,7 @@ export function createFakeNet() {
     async dial(roomId) {
       await Promise.resolve();
       const server = rooms.get(roomId);
-      if (!server) return null;
+      if (!server || server.dead) return null;
       const [hostSide, clientSide] = pair();
       server.accept(hostSide);
       return mute(clientSide, server);
@@ -84,7 +93,7 @@ function mute(conn, server) {
     onMessage: (fn) => conn.onMessage((msg) => (server.dead ? undefined : fn(msg))),
     onClose: (fn) => closers.push(fn),
     close: () => {
-      conn.close();
+      if (!server.dead) conn.close();
       queueMicrotask(fire);
     },
   };

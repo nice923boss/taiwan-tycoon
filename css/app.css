@@ -157,6 +157,8 @@ input[type="checkbox"] { min-height: auto; width: 18px; height: 18px; accent-col
 .char-card.taken .char-face { filter: saturate(0.6); cursor: default; }
 .char-card.mine .char-face { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242, 182, 50, 0.35); }
 .char-card.offline .char-owner::after { content: " · offline"; color: var(--red); }
+.char-card.taken.removable .char-face { cursor: pointer; }
+#btn-add-cpu { margin-bottom: 8px; }
 .char-dot { position: absolute; top: 10px; left: 10px; width: 14px; height: 14px; border-radius: 50%; }
 
 /* ---------- connection banner, toasts, tooltip ---------- */

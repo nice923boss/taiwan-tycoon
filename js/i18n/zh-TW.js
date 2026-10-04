@@ -173,6 +173,8 @@ export default {
   'err.notLeader': '只有房主可以這樣做',
   'err.needPlayers': '至少需要 {n} 位玩家',
   'err.chatTooFast': '訊息發送太快，請稍候',
+  'err.handoverDeclined': '主機不同意交接',
+  'err.hostSilent': '主機沒有回應，改由你接任主機',
 
   // ---- UI ----
   'ui.boardTitle': '台灣大富翁',
@@ -199,6 +201,11 @@ export default {
   'ui.featureUnavailable': '部分外掛元件無法載入，相關效果已略過',
   'ui.reconnecting': '重新連線中…', 'ui.offline': '離線',
   'ui.youAreHost': '你是主機', 'ui.hostIs': '主機：{name}',
+  'ui.becomeHost': '接任主機', 'ui.becomeHostOk': '要求接任', 'ui.becomeHostSent': '已送出接任要求',
+  'ui.becomeHostConfirm': '要接任主機嗎？主機 {n} 秒內沒按「不同意」就會交給你，遊戲進度完整保留；主機沒有回應時也會由你接手。',
+  'ui.handoverPending': '{name} 要求接任主機',
+  'ui.handoverTitle': '交接主機', 'ui.handoverDecline': '不同意', 'ui.handoverNow': '立即交接',
+  'ui.handoverAsk': '{name} 要求接任主機，{n} 秒後自動交接。遊戲進度會完整保留。',
 
   // lobby
   'ui.pickChar': '選一隻動物入座，或留在這裡觀戰',
@@ -208,6 +215,7 @@ export default {
   'ui.onlyLeader': '只有房主 {name} 可以操作',
   'ui.readyToStart': '{n} 位玩家已入座，可以開始',
   'ui.youMark': '{name}（你）', 'ui.none': '無',
+  'ui.addCpu': '加入電腦玩家', 'ui.cpuName': '電腦 {n}', 'ui.removeCpu': '移除 {name}', 'ui.noFreeSeat': '座位已滿',
 
   // players panel
   'ui.roundOf': '第 {n} / {max} 回合', 'ui.roundN': '第 {n} 回合',
@@ -220,7 +228,7 @@ export default {
   'ui.yourTurn': '輪到你了', 'ui.yourTurnJail': '你在監獄裡（第 {n} 次嘗試）',
   'ui.waitingFor': '等待 {name}', 'ui.moving': '移動中…',
   'ui.spectating': '你正在觀戰', 'ui.spectatingBankrupt': '你已破產，正在觀戰',
-  'ui.bot': '電腦代打', 'ui.takeOver': '接手 {name}', 'ui.takeOverOk': '接手',
+  'ui.bot': '電腦代打', 'ui.cpu': '電腦','ui.takeOver': '接手 {name}', 'ui.takeOverOk': '接手',
   'ui.takeOverConfirm': '要接手 {name} 的座位嗎？接手後由你繼續操作這位玩家的現金、地產與股票。',
   'ui.roll': '擲骰', 'ui.rollForDoubles': '擲骰（擲出對子即出獄）',
   'ui.payBail': '繳保釋金 {amt}', 'ui.useJailCard': '使用出獄許可證',

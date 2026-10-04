@@ -174,6 +174,8 @@ export default {
   'err.notLeader': 'Only the room leader can do that',
   'err.needPlayers': 'At least {n} players are needed',
   'err.chatTooFast': "You're sending messages too fast",
+  'err.handoverDeclined': 'The host declined the handover',
+  'err.hostSilent': 'The host is not responding, you are taking over as host',
 
   // ---- UI ----
   'ui.boardTitle': 'Taiwan Tycoon',
@@ -200,6 +202,11 @@ export default {
   'ui.featureUnavailable': 'Some add-on components could not load; their effects are skipped',
   'ui.reconnecting': 'Reconnecting…', 'ui.offline': 'Offline',
   'ui.youAreHost': 'You are the host', 'ui.hostIs': 'Host: {name}',
+  'ui.becomeHost': 'Become host', 'ui.becomeHostOk': 'Ask', 'ui.becomeHostSent': 'Request sent to the host',
+  'ui.becomeHostConfirm': 'Become the host? Unless the host declines within {n} s, the room passes to you with all progress kept. If the host does not respond, you take over anyway.',
+  'ui.handoverPending': '{name} asked to become host',
+  'ui.handoverTitle': 'Hand over host', 'ui.handoverDecline': 'Decline', 'ui.handoverNow': 'Hand over now',
+  'ui.handoverAsk': '{name} asks to become the host. Handing over in {n} s; all progress is kept.',
 
   // lobby
   'ui.pickChar': 'Pick an animal to take a seat, or stay here and watch',
@@ -209,6 +216,7 @@ export default {
   'ui.onlyLeader': 'Only the room leader {name} can do this',
   'ui.readyToStart': '{n} players seated; ready to start',
   'ui.youMark': '{name} (you)', 'ui.none': 'None',
+  'ui.addCpu': 'Add computer player', 'ui.cpuName': 'CPU {n}', 'ui.removeCpu': 'Remove {name}', 'ui.noFreeSeat': 'All seats are taken',
 
   // players panel
   'ui.roundOf': 'Round {n} / {max}', 'ui.roundN': 'Round {n}',
@@ -221,7 +229,7 @@ export default {
   'ui.yourTurn': 'Your turn', 'ui.yourTurnJail': 'You are in jail (attempt {n})',
   'ui.waitingFor': 'Waiting for {name}', 'ui.moving': 'Moving…',
   'ui.spectating': 'You are spectating', 'ui.spectatingBankrupt': 'You are bankrupt and now spectating',
-  'ui.bot': 'Computer', 'ui.takeOver': 'Take over {name}', 'ui.takeOverOk': 'Take over',
+  'ui.bot': 'Computer', 'ui.cpu': 'CPU','ui.takeOver': 'Take over {name}', 'ui.takeOverOk': 'Take over',
   'ui.takeOverConfirm': "Take over {name}'s seat? You will play on with this player's cash, properties and stocks.",
   'ui.roll': 'Roll', 'ui.rollForDoubles': 'Roll (doubles get you out)',
   'ui.payBail': 'Pay bail {amt}', 'ui.useJailCard': 'Use get-out-of-jail card',

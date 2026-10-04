@@ -4,11 +4,16 @@
 // ({ send, onMessage, onClose, close }) and a clock, so tests drive it directly.
 //
 // Host migration: a new host starts from its own saved snapshot and adopts any
-// newer snapshot (higher epoch, then rev) offered in a hello, until the first
-// accepted state change. Commands are refused for `recoverMs` after claiming so
-// that reconnecting peers can offer their snapshots first.
+// newer snapshot (higher gen, then epoch, then rev) offered in a hello, until the
+// first accepted state change. Commands are refused for `recoverMs` after claiming
+// so that reconnecting peers can offer their snapshots first.
+//
+// Handover: a member asks to run the room (`takeover`); unless the host declines
+// within handoverMs, the room raises `gen` and tells everyone to move: the asker
+// claims the other room id (session.js idOf), the others follow, and this room
+// only redirects late comers from then on.
 
-import { computerAction } from '../engine/bot.js';
+import { computerAction, cpuAction } from '../engine/bot.js';
 import { actorOf, applyAction, createGame, rehydrate, sanitize } from '../engine/game.js';
 import { randomSeed } from '../engine/rng.js';
 import { RULES } from '../engine/rules.js';
@@ -24,20 +29,30 @@ export const HOST_TIMING = {
   botStepMs: 1500, // pause before each computer move
   tickSlackMs: 250, // ticks (~500 ms) run late by varying amounts: a move due this soon goes now
   recoverMs: 2000, // commands refused right after claiming the room
+  handoverMs: 10000, // a takeover request goes through unless the host declines within this time
   chatWindowMs: 4000,
   chatPerWindow: 4,
 };
 
-const newer = (a, b) => a.epoch > b.epoch || (a.epoch === b.epoch && a.rev > b.rev);
+// gen first: a host that kept running after the room moved on (it froze, then
+// woke up) may have counted epoch and rev further than the room that replaced it.
+const newer = (a, b) => a.gen > b.gen || (a.gen === b.gen && (a.epoch > b.epoch || (a.epoch === b.epoch && a.rev > b.rev)));
 
-export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn = randomSeed, timing = HOST_TIMING }) {
+// Computer opponents get a random id in the same format as a player id.
+const cpuId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+// gen: the generation whose room id this host claimed; onDrop: called when a
+// member's connection ends, closed or dropped for silence (session.js then
+// looks for a newer host: a host that hung loses its members either way).
+export function createHostRoom({ selfId, snap = null, gen = 0, onDrop = () => {}, clock = Date.now, seedFn = randomSeed, timing = HOST_TIMING }) {
   const members = new Map(); // id -> { id, name, conn, lastSeen, chatTimes }; conn is null while a seated member is away
   const offlineAt = new Map(); // seat id -> time the seat went offline
   const conns = new Set(); // every attached connection, identified or not
   const claimedAt = clock();
-  let basis = { epoch: -1, rev: -1 }; // the snapshot this room continues from
+  let basis = { gen: -1, epoch: -1, rev: -1 }; // the snapshot this room continues from
   let adoptOpen = true;
-  let room = { epoch: 0, rev: 0, stage: 'lobby', seats: [], spectators: [], leader: null, host: selfId, rounds: RULES.defaultRounds };
+  let moved = null; // { gen, heir } once handed over: the room only redirects late comers
+  let room = { gen, epoch: 0, rev: 0, stage: 'lobby', seats: [], spectators: [], leader: null, host: selfId, rounds: RULES.defaultRounds, handover: null };
   let game = null;
   let chat = [];
   let chatSeq = 0;
@@ -71,6 +86,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
   }
 
   function broadcastState() {
+    if (moved) return;
     refresh();
     room = { ...room, rev: room.rev + 1 };
     broadcast({ t: 'state', now: clock(), room, game: game ? sanitize(game) : null });
@@ -93,7 +109,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
   function adopt(s) {
     if (s.game && !s.game.players.every((pl) => s.room.seats.some((seat) => seat.id === pl.id))) return;
     const now = clock();
-    basis = { epoch: s.room.epoch, rev: s.room.rev };
+    basis = { gen: s.room.gen, epoch: s.room.epoch, rev: s.room.rev };
     game = s.game ? rehydrate(s.game, seedFn()) : null;
     if (game && game.phase !== 'gameOver') {
       game.turnStartedAt = now;
@@ -101,9 +117,11 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
     }
     room = {
       ...s.room,
+      gen: Math.max(gen, basis.gen),
       epoch: basis.epoch + 1,
       rev: 0,
       host: selfId,
+      handover: null,
       seats: s.room.seats.map((seat) => {
         const online = isOnline(seat.id);
         return { ...seat, online, bot: !online && seat.bot, vacant: !online && seat.vacant };
@@ -111,7 +129,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
     };
     // Offline seats keep their computer / vacant status: date their absence to match.
     for (const seat of room.seats) {
-      if (seat.online || offlineAt.has(seat.id)) continue;
+      if (seat.cpu || seat.online || offlineAt.has(seat.id)) continue;
       offlineAt.set(seat.id, now - (seat.vacant ? timing.seatReleaseMs : seat.bot ? timing.offlineActMs : 0));
     }
     chat = s.chat.slice(-CHAT_KEEP);
@@ -154,6 +172,11 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
   }
 
   function join(conn, id, hello) {
+    if (moved) {
+      conn.send({ t: 'move', ...moved });
+      conn.close();
+      return false;
+    }
     const prev = members.get(id);
     const connected = [...members.values()].filter((m) => m.conn).length;
     if (!prev?.conn && connected >= MAX_CONNS) {
@@ -182,6 +205,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
 
   function leave(m) {
     m.conn = null;
+    if (room.handover?.by === m.id) room = { ...room, handover: null };
     if (isSeated(m.id)) {
       setSeat(m.id, { online: false });
       offlineAt.set(m.id, clock());
@@ -189,11 +213,13 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
       members.delete(m.id);
     }
     broadcastState();
+    if (!moved) onDrop();
   }
 
   // ---------- commands ----------
 
   function command(m, msg) {
+    if (moved) return undefined;
     if (clock() - claimedAt < timing.recoverMs) return reply(m.conn, 'err.recovering');
     const err = COMMANDS[msg.t](m, msg, clock());
     if (err) reply(m.conn, err.key, err.params ?? {});
@@ -283,22 +309,61 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
       changed();
       return null;
     },
+    // Computer opponents take free characters; the leader adds and removes them.
+    addCpu: lobbyOnly(leaderOnly((m, msg) => {
+      if (room.seats.some((seat) => seat.char === msg.char)) return { key: 'err.charTaken' };
+      const seat = { id: cpuId(), name: msg.name, char: msg.char, online: false, bot: false, vacant: false, cpu: true };
+      room = { ...room, seats: [...room.seats, seat] };
+      changed();
+      return null;
+    })),
+    removeCpu: lobbyOnly(leaderOnly((m, msg) => {
+      if (!room.seats.some((seat) => seat.cpu && seat.char === msg.char)) return { key: 'err.notNow' };
+      room = { ...room, seats: room.seats.filter((seat) => !(seat.cpu && seat.char === msg.char)) };
+      changed();
+      return null;
+    })),
+    // Any member but the host may ask to run the room, one request at a time.
+    takeover: (m, msg, now) => {
+      if (m.id === selfId || room.handover) return { key: 'err.notNow' };
+      room = { ...room, handover: { by: m.id, until: now + timing.handoverMs } };
+      changed();
+      return null;
+    },
+    // The host's answer: hand over now, or decline (the asker is told).
+    handover: (m, msg) => {
+      if (m.id !== selfId || !room.handover) return { key: 'err.notNow' };
+      const { by } = room.handover;
+      if (msg.ok) {
+        passOn(by);
+        return null;
+      }
+      room = { ...room, handover: null };
+      changed();
+      const asker = members.get(by)?.conn;
+      if (asker) reply(asker, 'err.handoverDeclined');
+      return null;
+    },
     hello: () => ({ key: 'err.badRequest' }),
   };
 
   // ---------- timers (called every ~500 ms) ----------
 
   function tick() {
+    if (moved) return;
     const now = clock();
     if (now - lastBeat >= timing.beatMs) {
       lastBeat = now;
       broadcast({ t: 'beat', now });
     }
-    for (const m of members.values()) {
-      if (m.conn && now - m.lastSeen > timing.silentMs) m.conn.close();
+    const silent = [...members.values()].filter((m) => m.conn && now - m.lastSeen > timing.silentMs);
+    for (const m of silent) m.conn.close();
+    if (room.handover && now >= room.handover.until) {
+      passOn(room.handover.by);
+      return;
     }
     if (room.stage === 'lobby') {
-      const stale = room.seats.filter((seat) => !seat.online && now - offlineAt.get(seat.id) >= timing.seatReleaseMs);
+      const stale = room.seats.filter((seat) => !seat.online && !seat.cpu && now - offlineAt.get(seat.id) >= timing.seatReleaseMs);
       if (stale.length === 0) return;
       room = { ...room, seats: room.seats.filter((seat) => !stale.includes(seat)) };
       for (const seat of stale) {
@@ -320,7 +385,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
       nextBotAt = now + timing.botStepMs;
     }
     if (turn && now + timing.tickSlackMs >= nextBotAt) {
-      const res = applyAction(game, computerAction(game, turn.p), { now });
+      const res = applyAction(game, turn.action, { now });
       if (!res.error) {
         game = res.game;
         botKey = botTurn()?.key ?? null;
@@ -336,11 +401,17 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
     changed();
   }
 
-  // The seat the computer must act for now, with a key that changes on each
-  // new decision (phase entries reset the deadline); null when there is none.
+  // The computer move due now (a computer opponent, or the cautious stand-in for
+  // an away player), with a key that changes on each new decision (phase entries
+  // and bids reset the deadline); null when there is none. A computer with
+  // nothing to do (the top bidder of an auction) lets the next actor go.
   function botTurn() {
-    const p = actorOf(game).find((i) => seatOf(game.players[i].id)?.bot);
-    return p === undefined ? null : { p, key: `${p}:${game.phase}:${game.deadline}` };
+    for (const p of actorOf(game)) {
+      const seat = seatOf(game.players[p].id);
+      const action = seat?.cpu ? cpuAction(game, p) : seat?.bot ? computerAction(game, p) : null;
+      if (action) return { p, action, key: `${p}:${game.phase}:${game.deadline}` };
+    }
+    return null;
   }
 
   // Seats of players away from a running game: the computer plays them after
@@ -350,7 +421,7 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
     let flipped = false;
     for (const seat of room.seats) {
       const p = indexOf(seat.id);
-      const away = !seat.online && p >= 0 && !game.players[p].bankrupt ? now - offlineAt.get(seat.id) : -1;
+      const away = !seat.online && !seat.cpu && p >= 0 && !game.players[p].bankrupt ? now - offlineAt.get(seat.id) : -1;
       const bot = away >= timing.offlineActMs;
       const vacant = away >= timing.seatReleaseMs;
       if (bot === seat.bot && vacant === seat.vacant) continue;
@@ -359,6 +430,25 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
       flipped = true;
     }
     return flipped;
+  }
+
+  // ---------- handover ----------
+
+  // Hand the room to `heir`: the last state carries the raised gen (so it beats
+  // anything this room might still say), then everyone is told to move.
+  function passOn(heir) {
+    room = { ...room, gen: room.gen + 1, handover: null };
+    changed();
+    moved = { gen: room.gen, heir };
+    broadcast({ t: 'move', ...moved });
+  }
+
+  // session.js found a host on the other room id: send everyone there. The
+  // state is left as it is, so it never outranks the room it gives way to.
+  function giveWay() {
+    if (moved) return;
+    moved = { gen: gen + 1, heir: null };
+    broadcast({ t: 'move', ...moved });
   }
 
   // What the host tab saves to sessionStorage (same shape as a client's).
@@ -371,5 +461,5 @@ export function createHostRoom({ selfId, snap = null, clock = Date.now, seedFn =
   }
 
   if (snap) adopt(snap);
-  return { attach, tick, snapshot, close };
+  return { attach, tick, snapshot, close, giveWay };
 }

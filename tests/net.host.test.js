@@ -428,7 +428,7 @@ test('takeover: a spectator claims a vacant seat; the old player comes back as a
   assert.ok(p >= 0);
   assert.equal(watcher.game().players[p].name, 'Watcher');
   assert.equal(watcher.game().players.some((pl) => pl.id === a.id), false);
-  assert.deepEqual(seatOf(watcher, watcher.id), { id: watcher.id, name: 'Watcher', char, online: true, bot: false, vacant: false });
+  assert.deepEqual(seatOf(watcher, watcher.id), { id: watcher.id, name: 'Watcher', char, online: true, bot: false, vacant: false, cpu: false });
   assert.deepEqual(watcher.room().spectators, []);
   assert.deepEqual(logOf(ctx).at(-1).key, 'log.seatClaimed');
   assert.deepEqual(logOf(ctx).at(-1).params, { p, name: 'P0' });
@@ -561,4 +561,164 @@ test('a snapshot whose players are not all seated is not adopted', async () => {
   const b = createHostRoom({ selfId: HOST_ID, snap, clock: () => 0, seedFn: () => 1 });
   assert.equal(b.snapshot().game, null);
   assert.equal(b.snapshot().room.stage, 'lobby');
+});
+
+test('computer players: the leader adds and removes them, in the lobby only', async () => {
+  const { host, clients } = await seated(1);
+  const [a] = clients;
+  const b = await connect(host, 1);
+  await send(b, { t: 'addCpu', char: CHARACTERS[1], name: 'CPU 1' });
+  assert.equal(b.errs().at(-1), 'err.notLeader');
+  await send(a, { t: 'addCpu', char: CHARACTERS[0], name: 'CPU 1' });
+  assert.equal(a.errs().at(-1), 'err.charTaken');
+
+  await send(a, { t: 'addCpu', char: CHARACTERS[1], name: 'CPU 1' });
+  const cpu = a.room().seats[1];
+  assert.match(cpu.id, /^[0-9a-f]{16}$/);
+  assert.deepEqual(cpu, { id: cpu.id, name: 'CPU 1', char: CHARACTERS[1], online: false, bot: false, vacant: false, cpu: true });
+  assert.equal(a.room().leader, a.id, 'a computer never leads');
+  await send(b, { t: 'sit', char: CHARACTERS[1] });
+  assert.equal(b.errs().at(-1), 'err.charTaken');
+  await send(a, { t: 'removeCpu', char: CHARACTERS[0] });
+  assert.equal(a.errs().at(-1), 'err.notNow', 'a person is not removed');
+  await send(a, { t: 'removeCpu', char: CHARACTERS[1] });
+  assert.equal(a.room().seats.length, 1);
+
+  // One person and one computer are enough to play.
+  await send(a, { t: 'addCpu', char: CHARACTERS[2], name: 'CPU 1' });
+  await send(a, { t: 'start' });
+  assert.equal(a.game().players.length, 2);
+  await send(a, { t: 'addCpu', char: CHARACTERS[3], name: 'CPU 2' });
+  assert.equal(a.errs().at(-1), 'err.notInLobby');
+  await send(a, { t: 'removeCpu', char: CHARACTERS[2] });
+  assert.equal(a.errs().at(-1), 'err.notInLobby');
+  assert.deepEqual([a, b].flatMap((x) => x.bad), []);
+});
+
+test('a computer player is never released or taken over, and plays its turns one step apart', async () => {
+  const { host, clock, clients } = await seated(1);
+  const ctx = { host, clock };
+  const [a] = clients;
+  await send(a, { t: 'addCpu', char: CHARACTERS[1], name: 'CPU 1' });
+  const cpu = a.room().seats[1].id;
+  await at(ctx, clock.now + HOST_TIMING.seatReleaseMs, [a]);
+  assert.equal(a.room().seats.length, 2, 'the lobby keeps the computer seat');
+
+  await send(a, { t: 'start' });
+  const watcher = await connect(host, 9);
+  const p = host.snapshot().game.players.findIndex((pl) => pl.id === cpu);
+  // The person never acts: their turns end by timeouts.
+  let steps = 0;
+  while (host.snapshot().game.current !== p) {
+    steps += 1;
+    assert.ok(steps < 200, 'the computer never got a turn');
+    await at(ctx, Math.max(clock.now + 1, host.snapshot().game.deadline ?? 0), [a, watcher]);
+  }
+  const before = JSON.stringify(host.snapshot().game);
+  for (let i = 0; i < 2 && JSON.stringify(host.snapshot().game) === before; i += 1) {
+    await at(ctx, clock.now + HOST_TIMING.botStepMs, [a, watcher]);
+  }
+  assert.notEqual(JSON.stringify(host.snapshot().game), before, 'the computer moved within two steps');
+  assert.equal(logOf(ctx).some((l) => l.key === 'log.timeout' && l.params.p === p), false);
+  assert.deepEqual({ bot: seatOf(a, cpu).bot, vacant: seatOf(a, cpu).vacant }, { bot: false, vacant: false });
+  await send(watcher, { t: 'claim', char: CHARACTERS[1] });
+  assert.equal(watcher.errs().at(-1), 'err.seatNotVacant');
+  assert.equal(logOf(ctx).some((l) => l.key === 'log.botOn'), false);
+});
+
+// A room run by client 0's tab: its own loopback connection is a member like the others.
+async function hostedBy0() {
+  const clock = { now: 1_000_000 };
+  const host = createHostRoom({ selfId: await idFromSecret(secretOf(0)), clock: () => clock.now, seedFn: () => 7 });
+  const clients = [];
+  for (let i = 0; i < 3; i += 1) clients.push(await connect(host, i));
+  clock.now += HOST_TIMING.recoverMs;
+  return { host, clock, clients };
+}
+
+test('host handover: one request at a time, the host may decline, else the room moves on at the deadline', async () => {
+  const ctx = await hostedBy0();
+  const [h, b, c] = ctx.clients;
+  await send(h, { t: 'takeover' });
+  assert.equal(h.errs().at(-1), 'err.notNow', 'the host does not ask itself');
+  await send(h, { t: 'handover', ok: true });
+  assert.equal(h.errs().at(-1), 'err.notNow', 'nothing to answer yet');
+
+  await send(b, { t: 'takeover' });
+  assert.deepEqual(c.room().handover, { by: b.id, until: ctx.clock.now + HOST_TIMING.handoverMs });
+  await send(c, { t: 'takeover' });
+  assert.equal(c.errs().at(-1), 'err.notNow', 'one request at a time');
+  await send(b, { t: 'handover', ok: true });
+  assert.equal(b.errs().at(-1), 'err.notNow', 'only the host answers');
+  await send(h, { t: 'handover', ok: false });
+  assert.equal(b.errs().at(-1), 'err.handoverDeclined');
+  assert.equal(c.errs().includes('err.handoverDeclined'), false);
+  assert.equal(c.room().handover, null);
+
+  // Asked again and not answered: at the deadline the room moves to the next generation.
+  await send(b, { t: 'takeover' });
+  const due = c.room().handover.until;
+  await at(ctx, due - 1, [h, b, c]);
+  assert.equal(c.last('move'), undefined);
+  await at(ctx, due, [h, b, c]);
+  for (const x of ctx.clients) assert.deepEqual(x.last('move'), { t: 'move', gen: 1, heir: b.id });
+  assert.equal(c.room().gen, 1, 'the last state already carries the new generation');
+  assert.equal(c.room().handover, null);
+
+  // From then on the old room only redirects.
+  const seen = c.msgs.length;
+  await send(c, { t: 'chat', text: 'hi' });
+  await at(ctx, due + HOST_TIMING.beatMs * 2, [h, b, c]);
+  assert.equal(c.msgs.length, seen, 'no replies, states or beats after the move');
+  const late = await connect(ctx.host, 5);
+  assert.deepEqual(late.last('move'), { t: 'move', gen: 1, heir: b.id });
+  assert.equal(late.closed, true);
+  assert.deepEqual([...ctx.clients, late].flatMap((x) => x.bad), []);
+});
+
+test('host handover: the host may hand over at once; a request ends when the asker leaves', async () => {
+  const ctx = await hostedBy0();
+  const [h, b, c] = ctx.clients;
+  await send(c, { t: 'takeover' });
+  assert.equal(b.room().handover.by, c.id);
+  c.close();
+  await flush();
+  assert.equal(b.room().handover, null);
+  await send(b, { t: 'takeover' });
+  await send(h, { t: 'handover', ok: true });
+  assert.deepEqual(b.last('move'), { t: 'move', gen: 1, heir: b.id });
+  assert.equal(h.last('move').heir, b.id);
+});
+
+test('giving way sends everyone to the next generation once, with no heir', async () => {
+  const ctx = await hostedBy0();
+  const states = ctx.clients[1].msgs.filter((m) => m.t === 'state').length;
+  ctx.host.giveWay();
+  ctx.host.giveWay();
+  await flush();
+  for (const x of ctx.clients) assert.deepEqual(x.msgs.filter((m) => m.t === 'move'), [{ t: 'move', gen: 1, heir: null }]);
+  assert.equal(ctx.clients[1].msgs.filter((m) => m.t === 'state').length, states, 'no state that could outrank the other room');
+});
+
+test('every member lost, closed or gone silent, makes the host look for a newer room', async () => {
+  const clock = { now: 1_000_000 };
+  let drops = 0;
+  const host = createHostRoom({ selfId: HOST_ID, clock: () => clock.now, seedFn: () => 7, onDrop: () => (drops += 1) });
+  const [a, b, c] = [await connect(host, 0), await connect(host, 1), await connect(host, 2)];
+  assert.equal(drops, 0);
+  // A tab that hung sees its members' connections closed once it wakes up.
+  a.close();
+  await flush();
+  assert.equal(drops, 1);
+  clock.now += HOST_TIMING.silentMs / 2;
+  await send(b, { t: 'beat' });
+  clock.now += HOST_TIMING.silentMs / 2 + 1;
+  host.tick();
+  await flush();
+  assert.equal(c.closed, true);
+  assert.equal(drops, 2, 'or drops them for silence');
+  host.giveWay();
+  b.close();
+  await flush();
+  assert.equal(drops, 2, 'not once the room has moved');
 });

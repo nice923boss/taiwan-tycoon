@@ -16,8 +16,13 @@ const TIMING = {
   retryMinMs: 20,
   retryMaxMs: 80,
   jitterMs: 20,
-  host: { ...HOST_TIMING, beatMs: 30, silentMs: 250, recoverMs: 60, seatReleaseMs: 60000, offlineActMs: 60000 },
+  moveDelayMs: 50,
+  followTries: 3,
+  forceSlackMs: 100,
+  host: { ...HOST_TIMING, beatMs: 30, silentMs: 250, recoverMs: 60, seatReleaseMs: 60000, offlineActMs: 60000, handoverMs: 300 },
 };
+// Room for the host to answer a takeover request before it goes through.
+const SLOW_HANDOVER = { ...TIMING, host: { ...TIMING.host, handoverMs: 5000 } };
 const CHARS = ['bear', 'leopardcat', 'magpie'];
 const secretOf = (i) => (0xa0 + i).toString(16).padStart(32, '0');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,8 +42,8 @@ async function until(pred, what, ms = 3000) {
 }
 
 // One browser tab: a session plus the errors it was sent.
-function openTab(t, net, i, storage = memStorage()) {
-  const s = createSession({ transport: net, roomId: ROOM, secret: secretOf(i), name: `P${i}`, storage, timing: TIMING });
+function openTab(t, net, i, storage = memStorage(), timing = TIMING) {
+  const s = createSession({ transport: net, roomId: ROOM, secret: secretOf(i), name: `P${i}`, storage, timing });
   s.storage = storage;
   s.errors = [];
   s.onError((key) => s.errors.push(key));
@@ -52,11 +57,11 @@ const seatOf = (s, view = s) => view.state.room.seats.find((seat) => seat.id ===
 // The game without the fields a new host resets (turn clock and deadline).
 const core = (g) => ({ ...g, deadline: 0, turnStartedAt: 0 });
 
-async function startedGame(t) {
+async function startedGame(t, timing = TIMING) {
   const net = createFakeNet();
-  const a = openTab(t, net, 0);
+  const a = openTab(t, net, 0, memStorage(), timing);
   await a.ready;
-  const tabs = [a, openTab(t, net, 1), openTab(t, net, 2)];
+  const tabs = [a, openTab(t, net, 1, memStorage(), timing), openTab(t, net, 2, memStorage(), timing)];
   await until(() => online(tabs), 'all tabs online');
   await sleep(TIMING.host.recoverMs + 20);
   tabs.forEach((s, i) => s.send({ t: 'sit', char: CHARS[i] }));
@@ -180,6 +185,115 @@ test('opening the same identity in another tab stops the old tab', async (t) => 
   await until(() => b.state.status === 'stopped', 'old tab stopped');
   assert.equal(b.state.reason, 'err.replaced');
   await until(() => b2.state.status === 'online' && seatOf(b2, a).online, 'new tab holds the seat');
+});
+
+// Waits until `heir` runs the room of generation `gen` with every tab online in it.
+async function handedTo(tabs, heir, gen) {
+  await until(
+    () => online(tabs) && hosts(tabs).length === 1 && heir.state.isHost
+      && tabs.every((s) => s.state.room.gen === gen && s.state.room.host === heir.state.you),
+    `generation ${gen} run by the heir with every tab online`,
+  );
+}
+
+test('a takeover request the host does not answer hands the room over with the game intact', async (t) => {
+  const { tabs } = await startedGame(t);
+  const [a, b] = tabs;
+  const game = b.state.game;
+  const started = Date.now();
+  b.takeover();
+  await until(() => tabs.every((s) => s.state.room.handover?.by === b.state.you), 'request seen by every tab');
+  await handedTo(tabs, b, 1);
+  assert.ok(Date.now() - started >= TIMING.host.handoverMs, 'not before the answer window ends');
+  assert.deepEqual(core(b.state.game), core(game));
+  assert.equal(a.state.isHost, false);
+  assert.ok(tabs.every((s) => seatOf(s, b).online && s.state.room.handover === null));
+  assert.deepEqual(tabs.flatMap((s) => s.errors), []);
+});
+
+test('the host can decline a takeover, and a second request waits its turn', async (t) => {
+  const { tabs } = await startedGame(t, SLOW_HANDOVER);
+  const [a, b, c] = tabs;
+  b.takeover();
+  await until(() => a.state.room.handover?.by === b.state.you, 'request seen by the host');
+  c.takeover();
+  await until(() => c.errors.includes('err.notNow'), 'second request refused');
+  a.answerHandover(false);
+  await until(() => b.errors.includes('err.handoverDeclined'), 'asker told');
+  await until(() => tabs.every((s) => s.state.room.handover === null), 'request cleared everywhere');
+  assert.equal(a.state.isHost, true);
+  assert.equal(a.state.room.gen, 0);
+});
+
+test('the host can hand over at once', async (t) => {
+  const { tabs } = await startedGame(t, SLOW_HANDOVER);
+  const [a, b] = tabs;
+  const game = b.state.game;
+  b.takeover();
+  await until(() => a.state.room.handover?.by === b.state.you, 'request seen by the host');
+  a.answerHandover(true);
+  await handedTo(tabs, b, 1); // until() gives up long before the 5 s answer window
+  assert.deepEqual(core(b.state.game), core(game));
+});
+
+test('a newcomer that claims the id the room has left gives way to the room', async (t) => {
+  const { net, tabs } = await startedGame(t);
+  const b = tabs[1];
+  b.takeover();
+  await handedTo(tabs, b, 1);
+  const claims = [];
+  const listen = net.listen;
+  net.listen = async (id) => {
+    const claim = await listen(id);
+    if (claim.ok) claims.push(id);
+    return claim;
+  };
+  const d = openTab(t, net, 3);
+  await until(() => d.state.status === 'online' && d.state.room?.host === b.state.you, 'newcomer in the room on the other id');
+  assert.deepEqual(claims, [ROOM], 'it claimed the free room id first');
+  assert.equal(net.rooms.has(ROOM), false, 'and let go of it');
+  assert.equal(hosts([...tabs, d]).length, 1);
+  assert.ok(b.state.room.spectators.some((s) => s.id === d.state.you));
+});
+
+// The host stops answering but keeps its room id (a hung tab). Its own drop
+// timer runs longer than the takeover, like a tab that wakes up later.
+const FROZEN = { ...TIMING, host: { ...TIMING.host, silentMs: 1000 } };
+
+async function frozenHost(t) {
+  const { net, tabs } = await startedGame(t, FROZEN);
+  const game = tabs[1].state.game;
+  net.rooms.get(ROOM).freeze();
+  return { tabs, game };
+}
+
+async function takenByForce(tabs, b, game) {
+  const c = tabs[2];
+  await until(() => b.state.isHost && c.state.status === 'online' && c.state.room.host === b.state.you, 'b hosts with c on the other id');
+  assert.equal(b.state.room.gen, 1);
+  assert.deepEqual(core(b.state.game), core(game));
+  assert.ok(b.errors.includes('err.hostSilent'));
+  assert.equal(c.errors.includes('err.hostSilent'), false);
+  // The old host wakes up, finds the room on the other id and gives way.
+  await handedTo(tabs, b, 1);
+  assert.ok(tabs.every((s) => seatOf(s, b).online));
+}
+
+test('a frozen host that ignores a takeover request is replaced by force', async (t) => {
+  const { tabs, game } = await frozenHost(t);
+  const b = tabs[1];
+  const started = Date.now();
+  b.takeover();
+  await takenByForce(tabs, b, game);
+  assert.ok(Date.now() - started >= TIMING.host.handoverMs + TIMING.forceSlackMs, 'only after the answer window');
+});
+
+test('a takeover while cut off from a frozen host takes the room at once', async (t) => {
+  const { tabs, game } = await frozenHost(t);
+  const b = tabs[1];
+  await until(() => b.state.status === 'connecting', 'b lost the host');
+  b.takeover();
+  await takenByForce(tabs, b, game);
 });
 
 test('replacing the host tab stops it and the room moves on', async (t) => {
